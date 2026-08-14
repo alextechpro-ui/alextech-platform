@@ -606,6 +606,8 @@
   .alert.success { background:#D5F5E3; color:#1E8449; border:1px solid #82E0AA; }
   .alert.warning { background:#FEF9E7; color:#B7950B; border:1px solid #FAD7A0; }
 </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -656,15 +658,15 @@
     </div>
     <div class="nav-section">
       <div class="nav-section-title">الرئيسية</div>
-      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">🏠</span> لوحة التحكم</div>
-      <div class="nav-item" onclick="showPage('tasks',this)"><span class="icon">✅</span> المهام <span class="nav-badge" id="tasks-badge">5</span></div>
-      <div class="nav-item" onclick="showPage('files',this)"><span class="icon">📁</span> الملفات</div>
+      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon"><i class="fas fa-home"></i></span> لوحة التحكم</div>
+      <div class="nav-item" onclick="showPage('tasks',this)"><span class="icon"><i class="fas fa-tasks"></i></span> المهام <span class="nav-badge" id="tasks-badge">5</span></div>
+      <div class="nav-item" onclick="showPage('files',this)"><span class="icon"><i class="fas fa-folder-open"></i></span> الملفات</div>
       <div class="nav-item" onclick="showPage('meetings',this)"><span class="icon">📹</span> الاجتماعات</div>
       <div class="nav-section-title" id="admin-nav-title" style="display:none">الإدارة</div>
-      <div class="nav-item" id="nav-employees" onclick="showPage('employees',this)" style="display:none"><span class="icon">👥</span> الموظفون</div>
-      <div class="nav-item" id="nav-reports" onclick="showPage('reports',this)" style="display:none"><span class="icon">📊</span> التقارير</div>
+      <div class="nav-item" id="nav-employees" onclick="showPage('employees',this)" style="display:none"><span class="icon"><i class="fas fa-users"></i></span> الموظفون</div>
+      <div class="nav-item" id="nav-reports" onclick="showPage('reports',this)" style="display:none"><span class="icon"><i class="fas fa-chart-bar"></i></span> التقارير</div>
       <div class="nav-section-title" id="admin-nav-title2" style="display:none">النظام</div>
-      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)" style="display:none"><span class="icon">⚙️</span> إعدادات المنصة</div>
+      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)" style="display:none"><span class="icon"><i class="fas fa-cog"></i></span> إعدادات المنصة</div>
     </div>
     <div class="sidebar-footer">
       <button class="btn-logout" onclick="doLogout()">🚪 تسجيل الخروج</button>
@@ -704,19 +706,19 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon navy">👥</div>
-            <div class="stat-info"><h3>8</h3><p>إجمالي الموظفين</p><div class="stat-change up">↑ موظف جديد هذا الشهر</div></div>
+            <div class="stat-info"><h3 id="stat-employees">0</h3><p>إجمالي الموظفين</p><div class="stat-change up">من قاعدة البيانات</div></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon gold">✅</div>
-            <div class="stat-info"><h3>23</h3><p>مهام نشطة</p><div class="stat-change up">↑ 5 مهام هذا الأسبوع</div></div>
+            <div class="stat-info"><h3 id="stat-tasks">0</h3><p>مهام نشطة</p><div class="stat-change up">من Supabase</div></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon green">📁</div>
-            <div class="stat-info"><h3>47</h3><p>ملفات محفوظة</p><div class="stat-change up">↑ 12 ملف جديد</div></div>
+            <div class="stat-info"><h3 id="stat-files">0</h3><p>ملفات محفوظة</p><div class="stat-change up">من Supabase</div></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon red">📹</div>
-            <div class="stat-info"><h3>3</h3><p>اجتماعات اليوم</p><div class="stat-change">التالي: 3:00 م</div></div>
+            <div class="stat-icon red">✅</div>
+            <div class="stat-info"><h3 id="stat-done">0</h3><p>مهام مكتملة</p><div class="stat-change up">من Supabase</div></div>
           </div>
         </div>
         <div class="dashboard-grid">
@@ -756,19 +758,17 @@
       <div class="page" id="page-files">
         <div class="card-header-flex">
           <h2>📁 مستودع الملفات</h2>
-          <div style="display:flex; gap:10px;">
-            <button class="btn-secondary">📂 مجلد جديد</button>
-            <button class="btn-primary" onclick="document.getElementById('file-input').click()">⬆️ رفع ملف</button>
-            <input type="file" id="file-input" style="display:none" multiple onchange="uploadFiles(this.files)">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn-primary" onclick="openModal('upload-file-modal')">⬆️ رفع ملف</button>
           </div>
         </div>
-        <div class="upload-zone" onclick="document.getElementById('file-input').click()"
+        <div class="upload-zone" onclick="openModal('upload-file-modal')"
           ondragover="event.preventDefault(); this.style.background='rgba(201,168,76,0.12)'"
           ondragleave="this.style.background='rgba(201,168,76,0.03)'"
-          ondrop="event.preventDefault(); uploadFiles(event.dataTransfer.files); this.style.background='rgba(201,168,76,0.03)'">
+          ondrop="event.preventDefault(); handleDropUpload(event); this.style.background='rgba(201,168,76,0.03)'">
           <div class="upload-icon">📤</div>
           <h3>اسحب الملفات هنا أو انقر للاختيار</h3>
-          <p>يدعم: PDF, Word, Excel, الصور وجميع أنواع الملفات</p>
+          <p>يمكنك تعيين الملف لموظف معيّن وربطه بمهمة</p>
         </div>
         <div class="files-toolbar">
           <input class="search-input" placeholder="🔍 البحث في الملفات..." oninput="searchFiles(this.value)">
@@ -800,14 +800,14 @@
       <div class="page" id="page-meetings">
         <div class="meeting-hero">
           <h2>📹 غرف الاجتماعات</h2>
-          <p>اجتمع مع فريقك بالصوت والصورة في أي وقت</p>
+          <p>صوت + صورة، أو صوت فقط، مع مشاركة الشاشة للشرح</p>
           <div class="meeting-btn-group">
-            <button class="btn-meet primary" onclick="startMeeting('اجتماع فوري')">🎥 بدء اجتماع فوري</button>
+            <button class="btn-meet primary" onclick="openModal('meeting-mode-modal')">🎥 بدء اجتماع فوري</button>
             <button class="btn-meet secondary" onclick="openModal('schedule-meeting-modal')">📅 جدولة اجتماع</button>
             <button class="btn-meet secondary" onclick="joinByCode()">🔗 الانضمام برمز</button>
           </div>
         </div>
-        <h3 style="margin-bottom:15px;">اجتماعات اليوم</h3>
+        <h3 style="margin-bottom:15px;">الاجتماعات المجدولة</h3>
         <div class="meetings-grid" id="meetings-grid"></div>
       </div>
 
@@ -938,9 +938,12 @@
       <button class="close-modal-btn" onclick="endCall()">✕</button>
     </div>
     <div class="video-area" id="video-area">
-      <div class="video-box speaking">
-        <div style="font-size:40px;">👤</div>
-        <div style="color:rgba(255,255,255,0.5);font-size:12px;">الكاميرا مغلقة</div>
+      <div class="video-box" id="my-video-box">
+        <video id="my-video" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;display:none;border-radius:12px;"></video>
+        <div id="my-video-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+          <div style="font-size:40px;">👤</div>
+          <div style="color:rgba(255,255,255,0.5);font-size:12px;">الكاميرا مغلقة</div>
+        </div>
         <div class="video-box-name" id="my-video-name">أنت</div>
       </div>
       <div class="video-box">
@@ -955,9 +958,9 @@
       </div>
     </div>
     <div class="video-controls">
-      <button class="ctrl-btn normal" onclick="toggleMic(this)" title="كتم الصوت">🎤</button>
-      <button class="ctrl-btn normal" onclick="toggleCam(this)" title="إيقاف الكاميرا">📷</button>
-      <button class="ctrl-btn normal" title="مشاركة الشاشة">🖥️</button>
+      <button class="ctrl-btn normal" id="mic-btn" onclick="toggleMic(this)" title="كتم الصوت">🎤</button>
+      <button class="ctrl-btn normal" id="cam-btn" onclick="toggleCam(this)" title="إيقاف الكاميرا">📷</button>
+      <button class="ctrl-btn normal" onclick="toggleScreenShare()" title="مشاركة الشاشة">🖥️</button>
       <button class="ctrl-btn normal" title="الدردشة">💬</button>
       <button class="ctrl-btn normal" title="المشاركون">👥</button>
       <button class="ctrl-btn danger" onclick="endCall()" title="إنهاء المكالمة">📵</button>
@@ -1007,6 +1010,54 @@
   </div>
 </div>
 
+
+
+<!-- MEETING MODE MODAL -->
+<div class="modal-overlay" id="meeting-mode-modal">
+  <div class="modal">
+    <h3>🎥 اختر نوع الاجتماع</h3>
+    <p style="color:var(--gray-500);font-size:13px;margin-bottom:20px;">يمكنك التحدث بالصوت والصورة أو بالصوت فقط، ومشاركة الشاشة لشرح أي شيء.</p>
+    <div class="input-group">
+      <label>اسم الاجتماع</label>
+      <input type="text" id="instant-meeting-name" value="اجتماع فوري" placeholder="اسم الغرفة">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin:20px 0;">
+      <button class="btn-primary" style="justify-content:center;padding:16px;" onclick="startMeetingWithMode('video')">📹 صوت + صورة</button>
+      <button class="btn-secondary" style="justify-content:center;padding:16px;border:2px solid var(--gold);" onclick="startMeetingWithMode('audio')">🎤 صوت فقط</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('meeting-mode-modal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD FILE MODAL -->
+<div class="modal-overlay" id="upload-file-modal">
+  <div class="modal">
+    <h3>⬆️ رفع ملف جديد</h3>
+    <div class="input-group">
+      <label>اختر الملف *</label>
+      <input type="file" id="upload-file-input" multiple>
+    </div>
+    <div class="input-group">
+      <label>إرسال إلى موظف</label>
+      <select id="upload-file-owner">
+        <option value="all">الجميع (عام)</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>ربط بمهمة (اختياري)</label>
+      <select id="upload-file-task">
+        <option value="">— بدون —</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('upload-file-modal')">إلغاء</button>
+      <button class="btn-primary" onclick="submitUpload()">✅ رفع الملف</button>
+    </div>
+  </div>
+</div>
+
 <!-- SCHEDULE MEETING MODAL -->
 <div class="modal-overlay" id="schedule-meeting-modal">
   <div class="modal">
@@ -1026,392 +1077,608 @@
 </div>
 
 <script>
-// ============ API CONFIG ============
-const API_BASE = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000/api' 
-  : ''; // ← غير ده لرابط Backend بتاعك
+// ============================================================
+// AlexTech Cloud - Real Supabase Integration
+// ============================================================
 
-let authToken = localStorage.getItem('alextech_token') || null;
-
-async function apiGet(endpoint) {
-  const res = await fetch(API_BASE + endpoint, {
-    headers: authToken ? { 'Authorization': 'Bearer ' + authToken } : {}
-  });
-  if (!res.ok) throw new Error('API Error');
-  return res.json();
+// Protocol warning
+if (window.location.protocol === 'file:') {
+  setTimeout(() => {
+    alert('⚠️ الملف شغال من جهازك (file://)\n\nSupabase مش هيشتغل كده!\n\nالحل:\n1. VS Code → Live Server\n2. أو ارفع على Vercel/Netlify');
+  }, 800);
 }
 
-async function apiPost(endpoint, data) {
-  const res = await fetch(API_BASE + endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {})
-    },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error('API Error');
-  return res.json();
-}
+// ============ SUPABASE ============
+const SUPABASE_URL = 'https://akgvhopnvdjusylmswhv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrZ3Zob3BudmRqdXN5bG1zd2h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NzA3OTAsImV4cCI6MjEwMjA0Njc5MH0.L72x8lvFXiuD6_ZKYpRd5vQzxShveO2JcyIKX2VbpPc';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function apiPut(endpoint, data) {
-  const res = await fetch(API_BASE + endpoint, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {})
-    },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error('API Error');
-  return res.json();
-}
-
-async function apiDelete(endpoint) {
-  const res = await fetch(API_BASE + endpoint, {
-    method: 'DELETE',
-    headers: authToken ? { 'Authorization': 'Bearer ' + authToken } : {}
-  });
-  if (!res.ok) throw new Error('API Error');
-  return res.json();
-}
-
-// ============ DATA ============
-const USERS = {
-  admin:  { pass:'admin123', name:'M. Sherif A Elradi', role:'مدير النظام', isAdmin:true, dept:'الإدارة' },
-  ahmed:  { pass:'123456', name:'أحمد محمد', role:'محاسب أول', isAdmin:false, dept:'المحاسبة' },
-  sara:   { pass:'123456', name:'سارة أحمد', role:'مهندسة برمجيات', isAdmin:false, dept:'تقنية المعلومات' },
-  omar:   { pass:'123456', name:'عمر خالد', role:'مدير مبيعات', isAdmin:false, dept:'المبيعات' },
-  nour:   { pass:'123456', name:'نور علي', role:'موارد بشرية', isAdmin:false, dept:'الموارد البشرية' },
-};
-
-let EMPLOYEES = [
-  { id:1, user:'ahmed', name:'أحمد محمد', role:'محاسب أول', dept:'المحاسبة', status:'online', tasks:7, done:5 },
-  { id:2, user:'sara',  name:'سارة أحمد', role:'مهندسة برمجيات', dept:'تقنية المعلومات', status:'busy', tasks:4, done:3 },
-  { id:3, user:'omar',  name:'عمر خالد', role:'مدير مبيعات', dept:'المبيعات', status:'offline', tasks:6, done:4 },
-  { id:4, user:'nour',  name:'نور علي', role:'موارد بشرية', dept:'الموارد البشرية', status:'online', tasks:3, done:3 },
-  { id:5, user:'karim', name:'كريم حسن', role:'مصمم جرافيك', dept:'التسويق', status:'online', tasks:5, done:2 },
-];
-
-let TASKS = [
-  { id:1, title:'مراجعة تقرير الميزانية الشهري', type:'تقرير', priority:'urgent', assignee:'ahmed', date:'2026-08-12', done:false, desc:'مراجعة أرقام الميزانية وإعداد التقرير النهائي' },
-  { id:2, title:'تحديث قاعدة بيانات العملاء', type:'تطوير', priority:'normal', assignee:'sara', date:'2026-08-15', done:false, desc:'تحديث سجلات العملاء الجديدة' },
-  { id:3, title:'تواصل مع الموردين', type:'تواصل', priority:'normal', assignee:'omar', date:'2026-08-10', done:true, desc:'متابعة العروض والعقود' },
-  { id:4, title:'إعداد عقود الموظفين الجدد', type:'إداري', priority:'urgent', assignee:'nour', date:'2026-08-11', done:false, desc:'إعداد وتوقيع عقود الموظفين' },
-  { id:5, title:'تصميم بروشور المنتجات الجديدة', type:'تسويق', priority:'low', assignee:'karim', date:'2026-08-20', done:false, desc:'تصميم بروشور احترافي' },
-  { id:6, title:'اجتماع مجلس الإدارة الشهري', type:'إداري', priority:'urgent', assignee:'all', date:'2026-08-15', done:false, desc:'اجتماع شهري لمراجعة الأداء' },
-];
-
-let FILES = [
-  { id:1, name:'تقرير مالي يوليو 2026.pdf', type:'pdf', size:'2.4 MB', date:'2026-08-01', owner:'all' },
-  { id:2, name:'جدول الرواتب.xlsx', type:'excel', size:'890 KB', date:'2026-08-03', owner:'ahmed' },
-  { id:3, name:'عقد موظف جديد.docx', type:'word', size:'145 KB', date:'2026-08-05', owner:'nour' },
-  { id:4, name:'خطة المبيعات Q3.xlsx', type:'excel', size:'1.2 MB', date:'2026-08-07', owner:'omar' },
-  { id:5, name:'تقرير تقني.pdf', type:'pdf', size:'3.1 MB', date:'2026-08-08', owner:'sara' },
-  { id:6, name:'دليل الموظف.docx', type:'word', size:'560 KB', date:'2026-07-20', owner:'all' },
-  { id:7, name:'بيانات العملاء.xlsx', type:'excel', size:'2.8 MB', date:'2026-08-02', owner:'omar' },
-  { id:8, name:'سياسة الشركة.pdf', type:'pdf', size:'420 KB', date:'2026-07-15', owner:'all' },
-];
-
-let MEETINGS = [
-  { id:1, title:'اجتماع الفريق الأسبوعي', time:'09:00 ص', date:'اليوم', parts:['أحمد','سارة','عمر','نور'] },
-  { id:2, title:'مراجعة المشاريع', time:'11:30 ص', date:'اليوم', parts:['سارة','كريم'] },
-  { id:3, title:'اجتماع مجلس الإدارة', time:'03:00 م', date:'اليوم', parts:['أحمد','عمر','نور','كريم'] },
-];
-
+// ============ STATE ============
 let currentUser = null;
+let EMPLOYEES = [];
+let TASKS = [];
+let MEETINGS = [];
+let FILES = [];
+let currentTaskFilter = 'all';
 let callTimer = null;
 let callSeconds = 0;
-let currentTaskFilter = 'all';
+let localStream = null;
+let isMicOn = true;
+let isCamOn = true;
+let isScreenSharing = false;
 
-// ============ LOCALSTORAGE ============
-function saveData(){
-  const data = { EMPLOYEES, TASKS, FILES, MEETINGS, USERS };
-  localStorage.setItem('alextech_data', JSON.stringify(data));
+// ============ HELPERS ============
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.cssText = `position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:${type === 'error' ? 'var(--red)' : 'var(--navy)'};color:white;padding:12px 25px;border-radius:50px;font-size:13px;z-index:999999;box-shadow:0 5px 20px rgba(0,0,0,0.3);`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
 }
-function loadData(){
-  const saved = localStorage.getItem('alextech_data');
-  if(saved){
-    try{
-      const data = JSON.parse(saved);
-      if(data.EMPLOYEES) EMPLOYEES = data.EMPLOYEES;
-      if(data.TASKS) TASKS = data.TASKS;
-      if(data.FILES) FILES = data.FILES;
-      if(data.MEETINGS) MEETINGS = data.MEETINGS;
-      if(data.USERS){
-        Object.keys(data.USERS).forEach(k=>{ if(k!=='admin') USERS[k]=data.USERS[k]; });
+
+function formatBytes(b) {
+  if (!b || b === 0) return '0 B';
+  const k = 1024, s = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(b) / Math.log(k));
+  return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
+}
+
+function getFileIcon(type) {
+  return { pdf: '📄', excel: '📊', word: '📝', image: '🖼️', zip: '🗜️' }[type] || '📎';
+}
+
+// ============ LOAD FROM SUPABASE ============
+async function loadFromSupabase() {
+  try {
+    // Employees
+    const { data: empData, error: empErr } = await sb.from('employees').select('*').order('id', { ascending: true });
+    if (empErr) throw empErr;
+    EMPLOYEES = (empData || []).map(x => ({
+      id: x.id,
+      name: x.name || '',
+      role: x.position || '',
+      dept: x.department || '',
+      email: x.email || '',
+      phone: x.phone || '',
+      salary: x.salary || 0,
+      joinDate: x.hire_date || '',
+      user: x.username || '',
+      status: x.status || 'offline',
+      tasks: 0,
+      done: 0
+    }));
+
+    // Tasks
+    const { data: taskData, error: taskErr } = await sb.from('tasks').select('*').order('id', { ascending: false });
+    if (taskErr) throw taskErr;
+    TASKS = (taskData || []).map(x => ({
+      id: x.id,
+      title: x.title || '',
+      desc: x.description || '',
+      type: x.type || 'أخرى',
+      priority: x.priority || 'normal',
+      assignee: x.assigned_to || 'all',
+      date: x.due_date || '',
+      done: x.status === 'done'
+    }));
+
+    // Count tasks per employee
+    EMPLOYEES.forEach(e => {
+      const my = TASKS.filter(t => t.assignee === e.user || t.assignee === 'all');
+      e.tasks = my.length;
+      e.done = my.filter(t => t.done).length;
+    });
+
+    // Meetings
+    const { data: meetData, error: meetErr } = await sb.from('meetings').select('*').order('meeting_time', { ascending: true });
+    if (meetErr) throw meetErr;
+    MEETINGS = (meetData || []).map(x => {
+      let date = '', time = '';
+      if (x.meeting_time) {
+        const d = new Date(x.meeting_time);
+        date = d.toISOString().split('T')[0];
+        time = d.toTimeString().slice(0, 5);
       }
-    }catch(e){ console.error('Load error', e); }
+      return {
+        id: x.id,
+        title: x.title || '',
+        type: x.type || 'اجتماع',
+        date,
+        time,
+        parts: x.participants || [],
+        desc: x.description || '',
+        location: x.location || ''
+      };
+    });
+
+    // Files
+    const { data: fileData, error: fileErr } = await sb.from('files').select('*').order('id', { ascending: false });
+    if (fileErr) throw fileErr;
+    FILES = (fileData || []).map(x => ({
+      id: x.id,
+      name: x.name || '',
+      type: x.type || 'file',
+      size: formatBytes(x.size || 0),
+      date: x.created_at ? x.created_at.split('T')[0] : '',
+      owner: x.owner || 'all',
+      url: x.url || '',
+      storage_path: x.storage_path || '',
+      task_id: x.task_id || null
+    }));
+
+    // Refresh all views
+    renderDashboard();
+    renderEmployees();
+    renderTasks();
+    renderFiles();
+    renderMeetings();
+    renderReports();
+    if (currentUser && currentUser.isAdmin) renderAdminSettings();
+
+    showToast('✅ تم تحميل البيانات من Supabase');
+  } catch (err) {
+    console.error(err);
+    showToast('❌ خطأ في الاتصال بـ Supabase: ' + (err.message || err), 'error');
   }
 }
-function exportData(){
-  const data = { EMPLOYEES, TASKS, FILES, MEETINGS, USERS, exportDate: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'alextech-backup-' + new Date().toISOString().split('T')[0] + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('⬇️ تم تصدير البيانات');
-}
-function importData(){
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = e =>{
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = ev =>{
-      try{
-        const data = JSON.parse(ev.target.result);
-        if(data.EMPLOYEES) EMPLOYEES = data.EMPLOYEES;
-        if(data.TASKS) TASKS = data.TASKS;
-        if(data.FILES) FILES = data.FILES;
-        if(data.MEETINGS) MEETINGS = data.MEETINGS;
-        if(data.USERS){
-          Object.keys(data.USERS).forEach(k=>{ if(k!=='admin') USERS[k]=data.USERS[k]; });
-        }
-        saveData();
-        renderDashboard(); renderTasks(); renderFiles(); renderEmployees(); renderMeetings(); renderReports();
-        showToast('⬬ تم استيراد البيانات بنجاح');
-      }catch(err){ showToast('❌ ملف غير صالح', true); }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
 
-// ============ AUTH ============
-function setLogin(u,p){ document.getElementById('login-user').value=u; document.getElementById('login-pass').value=p; }
-async function doLogin(){
-  const u = document.getElementById('login-user').value.trim();
-  const p = document.getElementById('login-pass').value.trim();
-
-  // Try API login first
-  try {
-    const data = await apiPost('/auth/login', { username: u, password: p });
-    authToken = data.token;
-    localStorage.setItem('alextech_token', authToken);
-    currentUser = { username: data.user.username, ...data.user };
-    document.getElementById('login-page').style.display='none';
-    document.getElementById('app').style.display='flex';
-    document.getElementById('app').classList.add('active');
-    initApp();
-    showToast('✅ تم تسجيل الدخول');
+// ============ LOGIN (from employees table) ============
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  if (!user || !pass) {
+    showToast('❌ أدخل اسم المستخدم وكلمة المرور', 'error');
     return;
-  } catch(e) {
-    // Fallback to local login if API is down
-    if(USERS[u] && USERS[u].pass === p){
-      currentUser = Object.assign({ username: u }, USERS[u]);
-      document.getElementById('login-page').style.display='none';
+  }
+
+  try {
+    const { data, error } = await sb.from('employees').select('*').eq('username', user).eq('password', pass).maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      alert('❌ اسم المستخدم أو كلمة المرور غير صحيحة!');
+      return;
+    }
+
+    currentUser = {
+      username: data.username,
+      name: data.name,
+      role: data.position,
+      dept: data.department,
+      isAdmin: data.username === 'admin',
+      email: data.email
+    };
+
+    localStorage.setItem('alextech_token', btoa(user + ':' + pass));
+    localStorage.setItem('alextech_user', JSON.stringify(currentUser));
+
+    // UI
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    document.querySelector('.user-name').textContent = currentUser.name;
+    document.querySelector('.user-role').textContent = currentUser.role;
+    document.querySelector('.user-avatar').textContent = currentUser.name[0] || 'U';
+
+    showPage('dashboard');
+    await loadFromSupabase();
+  } catch (err) {
+    console.error(err);
+    showToast('❌ فشل تسجيل الدخول: ' + err.message, 'error');
+  }
+}
+
+function setLogin(u, p) {
+  document.getElementById('login-user').value = u;
+  document.getElementById('login-pass').value = p;
+  doLogin();
+}
+
+function doLogout() {
+  localStorage.removeItem('alextech_token');
+  localStorage.removeItem('alextech_user');
+  currentUser = null;
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('login-page').style.display = '';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// Auto-login
+(async function tryAutoLogin() {
+  const token = localStorage.getItem('alextech_token');
+  const saved = localStorage.getItem('alextech_user');
+  if (token && saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      document.getElementById('login-page').style.display = 'none';
       document.getElementById('app').classList.add('active');
-      initApp();
-      showToast('⚠️ وضع محلي - الـ Backend غير متصل');
-    } else {
-      showToast('❌ اسم المستخدم أو كلمة المرور غلط', true);
+      document.querySelector('.user-name').textContent = currentUser.name;
+      document.querySelector('.user-role').textContent = currentUser.role;
+      document.querySelector('.user-avatar').textContent = (currentUser.name || 'U')[0];
+      showPage('dashboard');
+      await loadFromSupabase();
+    } catch (e) {
+      localStorage.clear();
     }
   }
-}
-function doLogout(){
-  currentUser=null;
-  authToken=null;
-  localStorage.removeItem('alextech_token');
-  document.getElementById('login-page').style.display='flex';
-  document.getElementById('app').style.display='none';
-  document.getElementById('app').classList.remove('active');
-  // Hide all pages
-  document.querySelectorAll('.page').forEach(p=>{
-    p.classList.remove('active');
-    p.style.display = 'none';
-  });
-  showToast('🚪 تم تسجيل الخروج');
-}
-document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+})();
 
-// ============ INIT ============
-function initApp(){
-  // Date
-  const d = new Date();
-  document.getElementById('topbar-date').textContent = d.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'});
-  // Sidebar user
-  document.getElementById('sidebar-avatar').textContent = currentUser.name[0];
-  document.getElementById('sidebar-name').textContent = currentUser.name;
-  document.getElementById('sidebar-role').textContent = currentUser.role;
-  // Admin nav
-  if(currentUser.isAdmin){
-    document.getElementById('admin-nav-title').style.display='block';
-    document.getElementById('admin-nav-title2').style.display='block';
-    document.getElementById('nav-employees').style.display='flex';
-    document.getElementById('nav-reports').style.display='flex';
-    document.getElementById('nav-settings').style.display='flex';
-  }
-  document.getElementById('my-video-name').textContent = currentUser.name;
-  // Set task filter
-  const today=new Date().toISOString().split('T')[0];
-  document.getElementById('new-task-date').value=today;
-  document.getElementById('meeting-date').value=today;
-  renderDashboard();
-  renderTasks();
-  renderFiles();
-  renderEmployees();
-  renderMeetings();
-  renderReports();
-}
-
-// ============ NAVIGATION ============
-function showPage(pageId, navEl){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pg = document.getElementById('page-'+pageId);
-  if(pg) pg.classList.add('active');
-  if(navEl) navEl.classList.add('active');
-  document.getElementById('notif-panel').classList.remove('active');
-  if(pageId === 'settings' && currentUser && currentUser.isAdmin){
-    renderAdminSettings();
-  }
+// ============ PAGES ============
+function showPage(pageId, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + pageId);
+  if (pg) pg.classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  const panel = document.getElementById('notif-panel');
+  if (panel) panel.classList.remove('active');
+  if (pageId === 'settings' && currentUser && currentUser.isAdmin) renderAdminSettings();
 }
 
 // ============ DASHBOARD ============
-function renderDashboard(){
-  // Employees list
+function renderDashboard() {
   const empList = document.getElementById('dash-employees');
-  empList.innerHTML = EMPLOYEES.slice(0,4).map(e=>`
+  if (!empList) return;
+  empList.innerHTML = EMPLOYEES.filter(e => e.user !== 'admin').slice(0, 5).map(e => `
     <div class="employee-item">
       <div class="emp-avatar">${e.name[0]}</div>
       <div><div class="emp-name">${e.name}</div><div class="emp-role">${e.role}</div></div>
-      <div class="emp-status"><span class="badge ${e.status}">${e.status==='online'?'متصل':e.status==='busy'?'مشغول':'غير متصل'}</span></div>
-    </div>`).join('');
-  // Tasks
+      <div class="emp-status"><span class="badge ${e.status}">${e.status === 'online' ? 'متصل' : e.status === 'busy' ? 'مشغول' : 'غير متصل'}</span></div>
+    </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:15px">لا يوجد موظفين</p>';
+
   const taskList = document.getElementById('dash-tasks');
-  const myTasks = currentUser.isAdmin ? TASKS.slice(0,4) : TASKS.filter(t=>t.assignee===currentUser.username||t.assignee==='all').slice(0,4);
-  taskList.innerHTML = myTasks.map(t=>`
+  if (!taskList) return;
+  const myTasks = currentUser && currentUser.isAdmin
+    ? TASKS.slice(0, 5)
+    : TASKS.filter(t => t.assignee === (currentUser && currentUser.username) || t.assignee === 'all').slice(0, 5);
+  taskList.innerHTML = myTasks.map(t => `
     <div class="task-item">
-      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id})"></div>
+      <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask(${t.id})"></div>
       <div class="task-content">
-        <div class="task-title ${t.done?'done':''}">${t.title}</div>
+        <div class="task-title ${t.done ? 'done' : ''}">${t.title}</div>
         <div class="task-meta">
-          <span class="task-tag ${t.priority}">${t.priority==='urgent'?'🔴 عاجل':t.priority==='low'?'🟢 منخفض':'🔵 عادي'}</span>
-          <span class="task-date">📅 ${t.date}</span>
+          <span class="task-tag ${t.priority}">${t.priority === 'urgent' ? '🔴 عاجل' : t.priority === 'low' ? '🟢 منخفض' : '🔵 عادي'}</span>
+          <span class="task-date">📅 ${t.date || '—'}</span>
         </div>
       </div>
-    </div>`).join('');
+    </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:15px">لا توجد مهام</p>';
+
+  // Stats
+  const totalEmp = EMPLOYEES.filter(e => e.user !== 'admin').length;
+  const pending = TASKS.filter(t => !t.done).length;
+  const done = TASKS.filter(t => t.done).length;
+  const totalFiles = FILES.length;
+  const el = (id, v) => { const n = document.getElementById(id); if (n) n.textContent = v; };
+  el('stat-employees', totalEmp);
+  el('stat-tasks', pending);
+  el('stat-done', done);
+  el('stat-files', totalFiles);
 }
 
 // ============ TASKS ============
-function renderTasks(){
+function renderTasks() {
   const list = document.getElementById('tasks-list');
-  let tasks = currentUser.isAdmin ? TASKS : TASKS.filter(t=>t.assignee===currentUser.username||t.assignee==='all');
-  if(currentTaskFilter==='pending') tasks=tasks.filter(t=>!t.done);
-  if(currentTaskFilter==='done') tasks=tasks.filter(t=>t.done);
-  if(currentTaskFilter==='urgent') tasks=tasks.filter(t=>t.priority==='urgent');
-  document.getElementById('tasks-badge').textContent = tasks.filter(t=>!t.done).length;
-  list.innerHTML = tasks.length ? tasks.map(t=>`
+  if (!list) return;
+  let tasks = currentUser && currentUser.isAdmin
+    ? [...TASKS]
+    : TASKS.filter(t => t.assignee === (currentUser && currentUser.username) || t.assignee === 'all');
+  if (currentTaskFilter === 'pending') tasks = tasks.filter(t => !t.done);
+  if (currentTaskFilter === 'done') tasks = tasks.filter(t => t.done);
+  if (currentTaskFilter === 'urgent') tasks = tasks.filter(t => t.priority === 'urgent');
+
+  const badge = document.getElementById('tasks-badge');
+  if (badge) badge.textContent = tasks.filter(t => !t.done).length;
+
+  list.innerHTML = tasks.length ? tasks.map(t => {
+    const isMine = currentUser && (t.assignee === currentUser.username || t.assignee === 'all' || currentUser.isAdmin);
+    return `
     <div class="task-item">
-      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id})"></div>
+      <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask(${t.id})"></div>
       <div class="task-content">
-        <div class="task-title ${t.done?'done':''}">${t.title}</div>
-        <div style="font-size:12px;color:var(--gray-500);margin-top:3px;">${t.desc}</div>
+        <div class="task-title ${t.done ? 'done' : ''}">${t.title}</div>
         <div class="task-meta">
-          <span class="task-tag ${t.priority}">${t.priority==='urgent'?'🔴 عاجل':t.priority==='low'?'🟢 منخفض':'🔵 عادي'}</span>
-          <span class="task-tag normal">📋 ${t.type}</span>
-          <span class="task-date">📅 ${t.date}</span>
-          ${currentUser.isAdmin ? `<span class="task-assignee">👤 ${t.assignee==='all'?'الجميع':EMPLOYEES.find(e=>e.user===t.assignee)?.name||t.assignee}</span>` : ''}
+          <span class="task-tag ${t.priority}">${t.priority === 'urgent' ? 'عاجل' : t.priority === 'low' ? 'منخفض' : 'عادي'}</span>
+          <span class="task-date">📅 ${t.date || '—'}</span>
+          ${currentUser && currentUser.isAdmin ? `<span class="task-assignee">👤 ${t.assignee === 'all' ? 'الجميع' : (EMPLOYEES.find(e => e.user === t.assignee)?.name || t.assignee)}</span>` : ''}
         </div>
+        ${!t.done && isMine ? `
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-sm gold" onclick="completeTaskWithFile(${t.id})">✅ تم اكتمال المهمة</button>
+          <button class="btn-sm outline" onclick="openUploadForTask(${t.id})">⬆️ رفع ملف مرتبط</button>
+        </div>` : ''}
       </div>
-      ${currentUser.isAdmin?`<button onclick="deleteTask(${t.id})" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--red)">🗑️</button>`:''}
-    </div>`).join('') : '<div style="text-align:center;color:var(--gray-500);padding:40px">لا توجد مهام</div>';
+      ${currentUser && currentUser.isAdmin ? `<button class="file-action-btn delete" onclick="deleteTask(${t.id})" style="margin-right:8px">🗑️</button>` : ''}
+    </div>`;
+  }).join('') : '<p style="color:var(--gray-500);text-align:center;padding:30px">لا توجد مهام</p>';
 }
-function filterTasks(f){
-  currentTaskFilter=f;
-  document.querySelectorAll('[id^=filter-]').forEach(b=>{ b.style.borderColor=''; b.style.color=''; });
-  const el=document.getElementById('filter-'+f);
-  if(el){ el.style.borderColor='var(--gold)'; el.style.color='var(--gold)'; }
+
+function openUploadForTask(taskId) {
+  openModal('upload-file-modal');
+  setTimeout(() => {
+    const sel = document.getElementById('upload-file-task');
+    if (sel) sel.value = String(taskId);
+  }, 100);
+}
+
+async function completeTaskWithFile(id) {
+  const ok = confirm('هل تم تنفيذ المهمة ورفع الملفات المطلوبة؟\\nسيتم تعليم المهمة كمكتملة.');
+  if (!ok) return;
+  const { error } = await sb.from('tasks').update({ status: 'done' }).eq('id', id);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('✅ تم اكتمال المهمة');
+  await loadFromSupabase();
+}
+
+function filterTasks(f) {
+  currentTaskFilter = f;
+  document.querySelectorAll('[data-task-filter]').forEach(b => b.classList.toggle('active', b.dataset.taskFilter === f));
   renderTasks();
 }
-function toggleTask(id){ const t=TASKS.find(t=>t.id===id); if(t){ t.done=!t.done; renderTasks(); renderDashboard(); showToast(t.done?'✅ تم إكمال المهمة':'↩️ تم إعادة المهمة للنشط'); } }
-function deleteTask(id){ TASKS=TASKS.filter(t=>t.id!==id); renderTasks(); renderDashboard(); showToast('🗑️ تم حذف المهمة'); }
-function addTask(){
-  const title=document.getElementById('new-task-title').value.trim();
-  if(!title){ showToast('❌ يجب إدخال عنوان المهمة',true); return; }
-  TASKS.unshift({ id:Date.now(), title, desc:document.getElementById('new-task-desc').value, type:document.getElementById('new-task-type').value, priority:document.getElementById('new-task-priority').value, assignee:document.getElementById('new-task-assign').value, date:document.getElementById('new-task-date').value, done:false });
+
+async function toggleTask(id) {
+  const t = TASKS.find(x => x.id === id);
+  if (!t) return;
+  const newStatus = t.done ? 'pending' : 'done';
+  const { error } = await sb.from('tasks').update({ status: newStatus }).eq('id', id);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  t.done = !t.done;
+  renderTasks();
+  renderDashboard();
+  showToast(t.done ? '✅ تم إكمال المهمة' : '↩️ تم إعادة المهمة');
+}
+
+async function deleteTask(id) {
+  if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
+  const { error } = await sb.from('tasks').delete().eq('id', id);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  TASKS = TASKS.filter(t => t.id !== id);
+  renderTasks();
+  renderDashboard();
+  showToast('🗑️ تم حذف المهمة');
+}
+
+async function addTask() {
+  const title = document.getElementById('new-task-title').value.trim();
+  if (!title) { showToast('❌ أدخل عنوان المهمة', 'error'); return; }
+  const description = document.getElementById('new-task-desc').value.trim();
+  const type = document.getElementById('new-task-type').value;
+  const priority = document.getElementById('new-task-priority').value;
+  const assigned_to = document.getElementById('new-task-assign').value;
+  const due_date = document.getElementById('new-task-date').value || null;
+
+  const { error } = await sb.from('tasks').insert([{
+    title, description, type, priority, assigned_to, due_date, status: 'pending'
+  }]);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+
   closeModal('add-task-modal');
-  document.getElementById('new-task-title').value='';
-  document.getElementById('new-task-desc').value='';
-  renderTasks(); renderDashboard();
-  showToast('✅ تم إضافة المهمة بنجاح');
+  document.getElementById('new-task-title').value = '';
+  document.getElementById('new-task-desc').value = '';
+  showToast('✅ تم إضافة المهمة');
+  await loadFromSupabase();
 }
 
 // ============ FILES ============
-function getFileIcon(type){ return {pdf:'📄',excel:'📊',word:'📝',image:'🖼️',zip:'🗜️'}[type]||'📎'; }
-function renderFiles(query='', typeFilter='all'){
+function renderFiles(query = '', typeFilter = 'all') {
   const grid = document.getElementById('files-grid');
-  let files = currentUser.isAdmin ? FILES : FILES.filter(f=>f.owner===currentUser.username||f.owner==='all');
-  if(query) files=files.filter(f=>f.name.toLowerCase().includes(query.toLowerCase()));
-  if(typeFilter!=='all') files=files.filter(f=>f.type===typeFilter);
-  grid.innerHTML = files.map(f=>`
+  if (!grid) return;
+  let files = currentUser && currentUser.isAdmin
+    ? [...FILES]
+    : FILES.filter(f => f.owner === (currentUser && currentUser.username) || f.owner === 'all');
+  if (query) files = files.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
+  if (typeFilter !== 'all') files = files.filter(f => f.type === typeFilter);
+
+  grid.innerHTML = files.length ? files.map(f => {
+    const ownerName = f.owner === 'all' ? 'عام' : (EMPLOYEES.find(e => e.user === f.owner)?.name || f.owner);
+    const canDelete = currentUser && (currentUser.isAdmin || f.owner === currentUser.username);
+    const hasUrl = f.url && f.url.length > 5;
+    return `
     <div class="file-card">
       <div class="file-icon">${getFileIcon(f.type)}</div>
       <div class="file-name">${f.name}</div>
       <div class="file-size">${f.size}</div>
-      <div class="file-date">${f.date}</div>
-      <div class="file-actions">
-        <button class="file-action-btn view" onclick="showToast('👁️ جارٍ فتح ${f.name}')">فتح</button>
-        <button class="file-action-btn delete" onclick="deleteFile(${f.id})">حذف</button>
+      <div class="file-date">${f.date} · 👤 ${ownerName}</div>
+      <div class="file-actions" style="flex-wrap:wrap;">
+        ${hasUrl ? `<button class="file-action-btn view" onclick="openFile('${f.url}')">فتح</button>
+        <button class="file-action-btn view" onclick="downloadFile('${f.url}','${f.name.replace(/'/g,"\\'")}')">تنزيل</button>` : `<button class="file-action-btn view" onclick="showToast('لا يوجد رابط للملف','error')">فتح</button>`}
+        ${canDelete ? `<button class="file-action-btn delete" onclick="deleteFile(${f.id})">حذف</button>` : ''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('') : '<p style="color:var(--gray-500);text-align:center;padding:30px;grid-column:1/-1">لا توجد ملفات</p>';
 }
-function searchFiles(q){ renderFiles(q); }
-function filterFiles(t){ renderFiles('',t); }
-function deleteFile(id){ FILES=FILES.filter(f=>f.id!==id); renderFiles(); showToast('🗑️ تم حذف الملف'); }
-function uploadFiles(fileList){
-  Array.from(fileList).forEach(file=>{
-    const ext = file.name.split('.').pop().toLowerCase();
-    const type = ['pdf'].includes(ext)?'pdf':['xlsx','xls','csv'].includes(ext)?'excel':['docx','doc'].includes(ext)?'word':['jpg','jpeg','png','gif'].includes(ext)?'image':'other';
-    FILES.unshift({ id:Date.now()+Math.random(), name:file.name, type, size:(file.size/1024/1024).toFixed(1)+' MB', date:new Date().toISOString().split('T')[0], owner:currentUser.username });
-  });
+
+function searchFiles(q) { renderFiles(q); }
+function filterFiles(t) { renderFiles('', t); }
+
+function openFile(url) {
+  if (!url) { showToast('❌ لا يوجد رابط', 'error'); return; }
+  window.open(url, '_blank');
+}
+
+function downloadFile(url, name) {
+  if (!url) { showToast('❌ لا يوجد رابط', 'error'); return; }
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name || 'file';
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  showToast('⬇️ جاري التنزيل...');
+}
+
+async function deleteFile(id) {
+  if (!confirm('هل أنت متأكد من حذف هذا الملف؟')) return;
+  const f = FILES.find(x => x.id === id);
+  // try remove from storage if path exists
+  if (f && f.storage_path) {
+    try { await sb.storage.from('alextech-files').remove([f.storage_path]); } catch(e){}
+  }
+  const { error } = await sb.from('files').delete().eq('id', id);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  FILES = FILES.filter(x => x.id !== id);
   renderFiles();
-  showToast(`✅ تم رفع ${fileList.length} ملف بنجاح`);
+  showToast('🗑️ تم حذف الملف');
+}
+
+function populateUploadSelects() {
+  const ownerSel = document.getElementById('upload-file-owner');
+  const taskSel = document.getElementById('upload-file-task');
+  if (ownerSel) {
+    ownerSel.innerHTML = '<option value="all">الجميع (عام)</option>' +
+      EMPLOYEES.filter(e => e.user !== 'admin').map(e => `<option value="${e.user}">${e.name}</option>`).join('');
+    if (currentUser && !currentUser.isAdmin) {
+      ownerSel.value = currentUser.username;
+      // employees can only assign to themselves unless admin - allow all for flexibility
+    }
+  }
+  if (taskSel) {
+    const pending = TASKS.filter(t => !t.done);
+    taskSel.innerHTML = '<option value="">— بدون —</option>' +
+      pending.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+  }
+}
+
+// override openModal to populate selects
+const _openModal = openModal;
+openModal = function(id) {
+  _openModal(id);
+  if (id === 'upload-file-modal') populateUploadSelects();
+};
+
+function handleDropUpload(event) {
+  const files = event.dataTransfer.files;
+  if (!files || !files.length) return;
+  openModal('upload-file-modal');
+  const input = document.getElementById('upload-file-input');
+  if (input) {
+    // can't set files programmatically easily; user selects again
+    showToast('اختر الملف من النافذة وعيّن الموظف');
+  }
+}
+
+async function submitUpload() {
+  const input = document.getElementById('upload-file-input');
+  const fileList = input && input.files;
+  if (!fileList || !fileList.length) {
+    showToast('❌ اختر ملفاً أولاً', 'error');
+    return;
+  }
+  const owner = document.getElementById('upload-file-owner').value || 'all';
+  const taskId = document.getElementById('upload-file-task').value || null;
+
+  for (const file of fileList) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    let type = 'file';
+    if (['pdf'].includes(ext)) type = 'pdf';
+    else if (['xls', 'xlsx', 'csv'].includes(ext)) type = 'excel';
+    else if (['doc', 'docx'].includes(ext)) type = 'word';
+    else if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) type = 'image';
+    else if (['zip', 'rar'].includes(ext)) type = 'zip';
+
+    let url = '';
+    let storage_path = '';
+    // Try Supabase Storage
+    try {
+      const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._\u0600-\u06FF-]/g, '_')}`;
+      const { error: upErr } = await sb.storage.from('alextech-files').upload(path, file, { upsert: false });
+      if (!upErr) {
+        storage_path = path;
+        const { data: pub } = sb.storage.from('alextech-files').getPublicUrl(path);
+        url = pub?.publicUrl || '';
+      } else {
+        console.warn('Storage upload failed:', upErr.message);
+        // fallback: object URL (session only) - still save metadata
+        url = URL.createObjectURL(file);
+      }
+    } catch (e) {
+      console.warn(e);
+      url = URL.createObjectURL(file);
+    }
+
+    const row = {
+      name: file.name,
+      type,
+      size: file.size,
+      url,
+      owner,
+      storage_path: storage_path || null
+    };
+    if (taskId) row.task_id = parseInt(taskId, 10);
+
+    const { error } = await sb.from('files').insert([row]);
+    if (error) {
+      // if task_id column missing, retry without it
+      if (error.message && error.message.includes('task_id')) {
+        delete row.task_id;
+        const { error: e2 } = await sb.from('files').insert([row]);
+        if (e2) { showToast('❌ ' + e2.message, 'error'); return; }
+      } else {
+        showToast('❌ ' + error.message, 'error');
+        return;
+      }
+    }
+  }
+
+  closeModal('upload-file-modal');
+  if (input) input.value = '';
+  showToast('✅ تم رفع ' + fileList.length + ' ملف');
+  await loadFromSupabase();
+}
+
+async function uploadFiles(fileList) {
+  // legacy: open modal
+  openModal('upload-file-modal');
 }
 
 // ============ EMPLOYEES ============
-function renderEmployees(){
+function renderEmployees() {
   const grid = document.getElementById('emp-grid');
-  grid.innerHTML = EMPLOYEES.map(e=>`
+  if (!grid) return;
+  const list = EMPLOYEES.filter(e => e.user !== 'admin');
+  grid.innerHTML = list.length ? list.map(e => `
     <div class="emp-card">
       <div class="emp-card-avatar">${e.name[0]}</div>
       <div class="emp-card-name">${e.name}</div>
       <div class="emp-card-role">${e.role} — ${e.dept}</div>
-      <span class="badge ${e.status}" style="margin-bottom:12px">${e.status==='online'?'🟢 متصل':e.status==='busy'?'🟡 مشغول':'⚫ غير متصل'}</span>
       <div class="emp-card-stats">
-        <div class="emp-stat"><strong>${e.tasks}</strong><span>إجمالي المهام</span></div>
+        <div class="emp-stat"><strong>${e.tasks}</strong><span>مهام</span></div>
         <div class="emp-stat"><strong>${e.done}</strong><span>مكتملة</span></div>
-        <div class="emp-stat"><strong>${Math.round(e.done/e.tasks*100)||0}%</strong><span>الإنجاز</span></div>
+        <div class="emp-stat"><strong>${e.tasks ? Math.round(e.done / e.tasks * 100) : 0}%</strong><span>إنجاز</span></div>
       </div>
-      <div class="progress-bar" style="margin:0 0 15px"><div class="progress-fill" style="width:${Math.round(e.done/e.tasks*100)||0}%"></div></div>
       <div class="emp-card-actions">
-        <button class="btn-sm gold" onclick="viewEmployee(${e.id})">👁️ عرض الملف</button>
-        <button class="btn-sm outline" onclick="openModal('add-task-modal'); document.getElementById('new-task-assign').value='${e.user}'">+ مهمة</button>
+        <button class="btn-sm gold" onclick="viewEmployee(${e.id})">عرض</button>
+        ${currentUser && currentUser.isAdmin ? `<button class="btn-sm outline" onclick="deleteEmployee(${e.id})">حذف</button>` : ''}
       </div>
-    </div>`).join('');
+    </div>`).join('') : '<p style="color:var(--gray-500);text-align:center;padding:30px;grid-column:1/-1">لا يوجد موظفين</p>';
+
+  // Update assign select in task modal
+  const assignSel = document.getElementById('new-task-assign');
+  if (assignSel) {
+    assignSel.innerHTML = '<option value="all">الجميع</option>' +
+      list.map(e => `<option value="${e.user}">${e.name}</option>`).join('');
+  }
 }
-function viewEmployee(id){
-  const e = EMPLOYEES.find(x=>x.id===id);
-  if(!e) return;
-  const empTasks = TASKS.filter(t=>t.assignee===e.user||t.assignee==='all');
-  const empFiles = FILES.filter(f=>f.owner===e.user||f.owner==='all');
-  document.getElementById('emp-detail-content').innerHTML = `
+
+function viewEmployee(id) {
+  const e = EMPLOYEES.find(x => x.id === id);
+  if (!e) return;
+  const empTasks = TASKS.filter(t => t.assignee === e.user || t.assignee === 'all');
+  const empFiles = FILES.filter(f => f.owner === e.user || f.owner === 'all');
+  const content = document.getElementById('emp-detail-content');
+  if (!content) return;
+  content.innerHTML = `
     <div class="emp-detail-header">
       <div class="emp-detail-avatar">${e.name[0]}</div>
       <div class="emp-detail-info">
         <h2>${e.name}</h2>
         <p>${e.role} — ${e.dept}</p>
-        <p>@${e.user}</p>
+        <p>@${e.user} ${e.email ? '· ' + e.email : ''}</p>
         <div class="emp-detail-stats">
           <div class="emp-d-stat"><strong>${e.tasks}</strong><span>المهام</span></div>
           <div class="emp-d-stat"><strong>${e.done}</strong><span>مكتملة</span></div>
-          <div class="emp-d-stat"><strong>${Math.round(e.done/e.tasks*100)||0}%</strong><span>إنجاز</span></div>
+          <div class="emp-d-stat"><strong>${e.tasks ? Math.round(e.done / e.tasks * 100) : 0}%</strong><span>إنجاز</span></div>
           <div class="emp-d-stat"><strong>${empFiles.length}</strong><span>ملفات</span></div>
         </div>
       </div>
@@ -1419,368 +1686,406 @@ function viewEmployee(id){
     <div class="dashboard-grid">
       <div class="dash-card">
         <h3 style="margin-bottom:15px">مهام الموظف</h3>
-        ${empTasks.map(t=>`<div class="task-item">
-          <div class="task-check ${t.done?'done':''}"></div>
+        ${empTasks.map(t => `<div class="task-item">
+          <div class="task-check ${t.done ? 'done' : ''}"></div>
           <div class="task-content">
-            <div class="task-title ${t.done?'done':''}">${t.title}</div>
-            <div class="task-meta"><span class="task-tag ${t.priority}">${t.priority==='urgent'?'عاجل':'عادي'}</span><span class="task-date">📅 ${t.date}</span></div>
+            <div class="task-title ${t.done ? 'done' : ''}">${t.title}</div>
+            <div class="task-meta"><span class="task-tag ${t.priority}">${t.priority === 'urgent' ? 'عاجل' : 'عادي'}</span><span class="task-date">📅 ${t.date || '—'}</span></div>
           </div>
-        </div>`).join('')||'<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد مهام</p>'}
+        </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد مهام</p>'}
       </div>
       <div class="dash-card">
         <h3 style="margin-bottom:15px">ملفات الموظف</h3>
-        ${empFiles.map(f=>`<div class="employee-item">
+        ${empFiles.map(f => `<div class="employee-item">
           <div style="font-size:24px">${getFileIcon(f.type)}</div>
           <div><div class="emp-name">${f.name}</div><div class="emp-role">${f.size} — ${f.date}</div></div>
-        </div>`).join('')||'<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد ملفات</p>'}
+        </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد ملفات</p>'}
       </div>
     </div>`;
   showPage('emp-detail', null);
 }
-function addEmployee(){
-  const name=document.getElementById('new-emp-name').value.trim();
-  const user=document.getElementById('new-emp-user').value.trim();
-  const pass=document.getElementById('new-emp-pass').value.trim();
-  if(!name||!user||!pass){ showToast('❌ يجب ملء الحقول المطلوبة',true); return; }
-  USERS[user]={ pass, name, role:document.getElementById('new-emp-role').value, isAdmin:false, dept:document.getElementById('new-emp-dept').value };
-  EMPLOYEES.push({ id:Date.now(), user, name, role:document.getElementById('new-emp-role').value, dept:document.getElementById('new-emp-dept').value, status:'offline', tasks:0, done:0 });
+
+async function addEmployee() {
+  const name = document.getElementById('new-emp-name').value.trim();
+  const user = document.getElementById('new-emp-user').value.trim().toLowerCase();
+  const pass = document.getElementById('new-emp-pass').value.trim();
+  if (!name || !user || !pass) {
+    showToast('❌ يجب ملء الاسم واسم المستخدم وكلمة المرور', 'error');
+    return;
+  }
+  const position = document.getElementById('new-emp-role').value.trim() || '';
+  const department = document.getElementById('new-emp-dept').value;
+  const email = (document.getElementById('new-emp-email') || {}).value || '';
+
+  const { error } = await sb.from('employees').insert([{
+    name, position, department, email, username: user, password: pass, status: 'offline'
+  }]);
+  if (error) {
+    showToast('❌ ' + (error.message.includes('unique') ? 'اسم المستخدم موجود مسبقاً' : error.message), 'error');
+    return;
+  }
   closeModal('add-emp-modal');
-  renderEmployees();
-  showToast('✅ تم إضافة الموظف بنجاح');
+  document.getElementById('new-emp-name').value = '';
+  document.getElementById('new-emp-user').value = '';
+  document.getElementById('new-emp-pass').value = '';
+  showToast('✅ تم إضافة الموظف');
+  await loadFromSupabase();
+}
+
+async function deleteEmployee(id) {
+  if (!confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
+  const { error } = await sb.from('employees').delete().eq('id', id);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('🗑️ تم حذف الموظف');
+  await loadFromSupabase();
 }
 
 // ============ MEETINGS ============
-let localStream = null;
-let isMicOn = true;
-let isCamOn = true;
-let isScreenSharing = false;
-
-function renderMeetings(){
+function renderMeetings() {
   const grid = document.getElementById('meetings-grid');
-  grid.innerHTML = MEETINGS.map(m=>`
+  if (!grid) return;
+  grid.innerHTML = MEETINGS.map(m => `
     <div class="meeting-card">
       <div class="meeting-card-top">
         <div class="meeting-type-icon">📹</div>
-        <div><div class="meeting-card-title">${m.title}</div><div class="meeting-card-time">⏰ ${m.time} — ${m.date}</div></div>
+        <div>
+          <div class="meeting-card-title">${m.title}</div>
+          <div class="meeting-card-time">⏰ ${m.time || '--:--'} — ${m.date || ''}</div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="meeting-participants">
-          ${m.parts.map(p=>`<div class="part-avatar">${p[0]}</div>`).join('')}
-          <span style="font-size:11px;color:var(--gray-500);margin-right:5px;">${m.parts.length} مشاركين</span>
+          ${(m.parts || []).slice(0, 4).map(p => `<div class="part-avatar">${(p[0] || '?')}</div>`).join('')}
+          <span style="font-size:11px;color:var(--gray-500);margin-right:5px;">${(m.parts || []).length} مشاركين</span>
         </div>
-        <button class="join-btn" onclick="startMeeting('${m.title}')">انضمام</button>
+        <button class="join-btn" onclick="prepareMeeting('${m.title.replace(/'/g, "\\'")}')">انضمام</button>
       </div>
-    </div>`).join('');
+    </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:30px;grid-column:1/-1">لا توجد اجتماعات</p>';
 }
 
-async function startMeeting(name){
-  document.getElementById('meeting-room-name').textContent='🎥 '+name;
+async function scheduleMeeting() {
+  const title = document.getElementById('meeting-title').value.trim();
+  if (!title) { showToast('❌ أدخل عنوان الاجتماع', 'error'); return; }
+  const date = document.getElementById('meeting-date').value;
+  const time = document.getElementById('meeting-time').value;
+  let meeting_time = null;
+  if (date && time) meeting_time = `${date}T${time}:00+03`;
+  else if (date) meeting_time = `${date}T12:00:00+03`;
+
+  const partsSel = document.getElementById('meeting-parts');
+  const participants = partsSel ? Array.from(partsSel.selectedOptions).map(o => o.value) : [];
+
+  const { error } = await sb.from('meetings').insert([{
+    title,
+    type: 'اجتماع',
+    meeting_time,
+    description: '',
+    location: '',
+    participants
+  }]);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  closeModal('schedule-meeting-modal');
+  document.getElementById('meeting-title').value = '';
+  showToast('📅 تم جدولة الاجتماع');
+  await loadFromSupabase();
+}
+
+let meetingMediaMode = 'video'; // video | audio
+
+function prepareMeeting(name) {
+  const inp = document.getElementById('instant-meeting-name');
+  if (inp) inp.value = name || 'اجتماع';
+  openModal('meeting-mode-modal');
+}
+
+function startMeetingWithMode(mode) {
+  meetingMediaMode = mode || 'video';
+  const name = (document.getElementById('instant-meeting-name') || {}).value || 'اجتماع فوري';
+  closeModal('meeting-mode-modal');
+  startMeeting(name);
+}
+
+async function startMeeting(name) {
+  document.getElementById('meeting-room-name').textContent = '🎥 ' + name;
   document.getElementById('video-modal-overlay').classList.add('active');
   document.body.classList.add('modal-open');
 
-  // Try to get camera and microphone
+  const wantVideo = meetingMediaMode !== 'audio';
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: wantVideo, audio: true });
     const videoEl = document.getElementById('my-video');
-    videoEl.srcObject = localStream;
-    videoEl.style.display = 'block';
-    document.getElementById('my-video-placeholder').style.display = 'none';
-    document.getElementById('my-video-box').classList.add('speaking');
-    isMicOn = true; isCamOn = true;
-    document.getElementById('mic-btn').textContent = '🎤';
-    document.getElementById('cam-btn').textContent = '📷';
-    showToast('✅ تم تشغيل الكاميرا والميكروفون');
-  } catch(err) {
-    console.error('Camera error:', err);
-    showToast('⚠️ لم نتمكن من الوصول للكاميرا. تأكد من السماح بالصلاحيات.', true);
-    document.getElementById('my-video-placeholder').innerHTML = `
-      <div style="font-size:40px;">👤</div>
-      <div style="color:rgba(255,255,255,0.5);font-size:12px;">الكاميرا غير متوفرة</div>
-      <div style="color:rgba(255,255,255,0.3);font-size:10px;margin-top:4px;">${err.name}</div>`;
+    const placeholder = document.getElementById('my-video-placeholder');
+    if (wantVideo && videoEl) {
+      videoEl.srcObject = localStream;
+      videoEl.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+      document.getElementById('my-video-box')?.classList.add('speaking');
+    } else {
+      if (videoEl) videoEl.style.display = 'none';
+      if (placeholder) {
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = '<div style="font-size:40px;">🎤</div><div style="color:rgba(255,255,255,0.5);font-size:12px;">وضع الصوت فقط</div>';
+      }
+    }
+    isMicOn = true;
+    isCamOn = wantVideo;
+    const micBtn = document.getElementById('mic-btn');
+    const camBtn = document.getElementById('cam-btn');
+    if (micBtn) micBtn.textContent = '🎤';
+    if (camBtn) camBtn.textContent = wantVideo ? '📷' : '🚫';
+    showToast(wantVideo ? '✅ تم تشغيل الكاميرا والميكروفون' : '✅ تم تشغيل الميكروفون (صوت فقط)');
+  } catch (err) {
+    console.error(err);
+    showToast('⚠️ لم نتمكن من الوصول للميكروفون/الكاميرا. اسمح بالصلاحيات.', 'error');
+    const ph = document.getElementById('my-video-placeholder');
+    if (ph) {
+      ph.style.display = 'flex';
+      ph.innerHTML = `<div style="font-size:40px;">👤</div><div style="color:rgba(255,255,255,0.5);font-size:12px;">غير متاح</div><div style="color:rgba(255,255,255,0.3);font-size:10px;">${err.name||''}</div>`;
+    }
   }
 
-  callSeconds=0; document.getElementById('call-timer').textContent='00:00';
-  callTimer=setInterval(()=>{ callSeconds++; const m=String(Math.floor(callSeconds/60)).padStart(2,'0'); const s=String(callSeconds%60).padStart(2,'0'); document.getElementById('call-timer').textContent=m+':'+s; },1000);
+  callSeconds = 0;
+  const timerEl = document.getElementById('call-timer');
+  if (timerEl) timerEl.textContent = '00:00';
+  clearInterval(callTimer);
+  callTimer = setInterval(() => {
+    callSeconds++;
+    const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+    const s = String(callSeconds % 60).padStart(2, '0');
+    if (timerEl) timerEl.textContent = m + ':' + s;
+  }, 1000);
 }
 
-function endCall(){ 
+function endCall() {
   document.body.classList.remove('modal-open');
-  // Stop all tracks
-  if(localStream){
-    localStream.getTracks().forEach(track => track.stop());
+  if (localStream) {
+    localStream.getTracks().forEach(t => t.stop());
     localStream = null;
   }
-  document.getElementById('my-video').srcObject = null;
-  document.getElementById('my-video').style.display = 'none';
-  document.getElementById('my-video-placeholder').style.display = 'flex';
-  document.getElementById('my-video-placeholder').innerHTML = `
-    <div style="font-size:40px;">👤</div>
-    <div style="color:rgba(255,255,255,0.5);font-size:12px;">الكاميرا مغلقة</div>`;
-  document.getElementById('my-video-box').classList.remove('speaking');
-  document.getElementById('video-modal-overlay').classList.remove('active'); 
-  clearInterval(callTimer); 
-  showToast('📵 انتهت المكالمة — المدة: '+document.getElementById('call-timer').textContent); 
+  const videoEl = document.getElementById('my-video');
+  if (videoEl) { videoEl.srcObject = null; videoEl.style.display = 'none'; }
+  const ph = document.getElementById('my-video-placeholder');
+  if (ph) {
+    ph.style.display = 'flex';
+    ph.innerHTML = '<div style="font-size:40px;">👤</div><div style="color:rgba(255,255,255,0.5);font-size:12px;">الكاميرا مغلقة</div>';
+  }
+  document.getElementById('my-video-box')?.classList.remove('speaking');
+  document.getElementById('video-modal-overlay').classList.remove('active');
+  clearInterval(callTimer);
+  showToast('📵 انتهت المكالمة — المدة: ' + document.getElementById('call-timer').textContent);
 }
 
-function toggleMic(btn){ 
-  if(!localStream) return;
-  const audioTrack = localStream.getAudioTracks()[0];
-  if(audioTrack){
-    audioTrack.enabled = !audioTrack.enabled;
-    isMicOn = audioTrack.enabled;
+function toggleMic(btn) {
+  if (!localStream) return;
+  const track = localStream.getAudioTracks()[0];
+  if (track) {
+    track.enabled = !track.enabled;
+    isMicOn = track.enabled;
     btn.textContent = isMicOn ? '🎤' : '🔇';
     showToast(isMicOn ? '🎤 تم تشغيل الميكروفون' : '🔇 تم كتم الميكروفون');
   }
 }
 
-function toggleCam(btn){ 
-  if(!localStream) return;
-  const videoTrack = localStream.getVideoTracks()[0];
-  if(videoTrack){
-    videoTrack.enabled = !videoTrack.enabled;
-    isCamOn = videoTrack.enabled;
+function toggleCam(btn) {
+  if (!localStream) return;
+  const track = localStream.getVideoTracks()[0];
+  if (track) {
+    track.enabled = !track.enabled;
+    isCamOn = track.enabled;
     btn.textContent = isCamOn ? '📷' : '🚫';
     const videoEl = document.getElementById('my-video');
-    const placeholder = document.getElementById('my-video-placeholder');
-    if(isCamOn){
+    const ph = document.getElementById('my-video-placeholder');
+    if (isCamOn) {
       videoEl.style.display = 'block';
-      placeholder.style.display = 'none';
+      ph.style.display = 'none';
     } else {
       videoEl.style.display = 'none';
-      placeholder.style.display = 'flex';
-      placeholder.innerHTML = `
-        <div style="font-size:40px;">👤</div>
-        <div style="color:rgba(255,255,255,0.5);font-size:12px;">الكاميرا متوقفة</div>`;
+      ph.style.display = 'flex';
+      ph.innerHTML = '<div style="font-size:40px;">👤</div><div style="color:rgba(255,255,255,0.5);font-size:12px;">الكاميرا متوقفة</div>';
     }
     showToast(isCamOn ? '📷 تم تشغيل الكاميرا' : '📷 تم إيقاف الكاميرا');
   }
 }
 
-async function toggleScreenShare(){
-  if(!localStream) return;
-  if(isScreenSharing){
-    // Stop screen share and go back to camera
+async function toggleScreenShare() {
+  if (!localStream) return;
+  if (isScreenSharing) {
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStream.getVideoTracks().forEach(t => t.stop());
-      const videoTrack = newStream.getVideoTracks()[0];
+      const vt = newStream.getVideoTracks()[0];
       localStream.removeTrack(localStream.getVideoTracks()[0]);
-      localStream.addTrack(videoTrack);
+      localStream.addTrack(vt);
       document.getElementById('my-video').srcObject = localStream;
       isScreenSharing = false;
       showToast('📷 تم العودة للكاميرا');
-    } catch(e){
-      showToast('⚠️ تعذر العودة للكاميرا', true);
-    }
+    } catch (e) { showToast('⚠️ تعذر العودة للكاميرا', 'error'); }
   } else {
-    // Start screen share
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       const screenTrack = screenStream.getVideoTracks()[0];
-      const oldTrack = localStream.getVideoTracks()[0];
-      if(oldTrack) localStream.removeTrack(oldTrack);
+      const old = localStream.getVideoTracks()[0];
+      if (old) localStream.removeTrack(old);
       localStream.addTrack(screenTrack);
       document.getElementById('my-video').srcObject = localStream;
       isScreenSharing = true;
       showToast('🖥️ تم بدء مشاركة الشاشة');
-      screenTrack.onended = () => {
-        isScreenSharing = false;
-        toggleScreenShare();
-      };
-    } catch(e){
-      showToast('⚠️ تم إلغاء مشاركة الشاشة', true);
-    }
+      screenTrack.onended = () => { isScreenSharing = false; toggleScreenShare(); };
+    } catch (e) { showToast('⚠️ تم إلغاء مشاركة الشاشة', 'error'); }
   }
 }
 
-function joinByCode(){ const code=prompt('أدخل رمز الغرفة:'); if(code) startMeeting('غرفة: '+code); }
-
-function scheduleMeeting(){
-  const title=document.getElementById('meeting-title').value.trim();
-  if(!title){ showToast('❌ أدخل عنوان الاجتماع',true); return; }
-  MEETINGS.unshift({ id:Date.now(), title, time:document.getElementById('meeting-time').value||'--:--', date:document.getElementById('meeting-date').value, parts:['أنت'] });
-  closeModal('schedule-meeting-modal');
-  renderMeetings();
-  showToast('📅 تم جدولة الاجتماع بنجاح');
+function joinByCode() {
+  const code = prompt('أدخل رمز الغرفة:');
+  if (code) prepareMeeting('غرفة: ' + code);
 }
 
 // ============ REPORTS ============
-function renderReports(){
+function renderReports() {
   const tbody = document.getElementById('reports-table');
-  if(!tbody) return;
-  tbody.innerHTML = EMPLOYEES.map(e=>`
+  if (!tbody) return;
+  tbody.innerHTML = EMPLOYEES.filter(e => e.user !== 'admin').map(e => `
     <tr>
       <td><span class="table-avatar">${e.name[0]}</span>${e.name}</td>
       <td>${e.done}</td>
-      <td>${e.tasks-e.done}</td>
-      <td><div class="progress-bar"><div class="progress-fill" style="width:${Math.round(e.done/e.tasks*100)||0}%"></div></div>${Math.round(e.done/e.tasks*100)||0}%</td>
-      <td><span class="badge ${e.status}">${e.status==='online'?'متصل':e.status==='busy'?'مشغول':'غير متصل'}</span></td>
+      <td>${e.tasks - e.done}</td>
+      <td><div class="progress-bar"><div class="progress-fill" style="width:${e.tasks ? Math.round(e.done / e.tasks * 100) : 0}%"></div></div>${e.tasks ? Math.round(e.done / e.tasks * 100) : 0}%</td>
+      <td><span class="badge ${e.status}">${e.status === 'online' ? 'متصل' : e.status === 'busy' ? 'مشغول' : 'غير متصل'}</span></td>
     </tr>`).join('');
 }
 
-// ============ MODALS ============
-function openModal(id){ 
-  document.getElementById(id).classList.add('active'); 
-  if(id !== 'video-modal-overlay') document.body.classList.add('modal-open');
+// ============ ADMIN SETTINGS ============
+function renderAdminSettings() {
+  if (!currentUser || !currentUser.isAdmin) return;
+  const panel = document.getElementById('admin-settings-panel');
+  if (panel) panel.style.display = 'block';
+
+  const empList = document.getElementById('settings-employees-list');
+  if (empList) {
+    empList.innerHTML = EMPLOYEES.filter(e => e.user !== 'admin').map(e => `
+      <div class="employee-item" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="emp-avatar">${e.name[0]}</div>
+          <div><div class="emp-name">${e.name}</div><div class="emp-role">${e.role} — ${e.dept}</div></div>
+        </div>
+        <button class="btn-sm" style="background:var(--red);color:white;" onclick="deleteEmployee(${e.id})">🗑️ حذف</button>
+      </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا يوجد موظفين</p>';
+  }
+
+  const taskList = document.getElementById('settings-tasks-list');
+  if (taskList) {
+    taskList.innerHTML = TASKS.map(t => `
+      <div class="task-item" style="justify-content:space-between;">
+        <div style="flex:1;">
+          <div class="task-title ${t.done ? 'done' : ''}">${t.title}</div>
+          <div style="font-size:11px;color:var(--gray-500);">${t.assignee === 'all' ? 'الجميع' : (EMPLOYEES.find(e => e.user === t.assignee)?.name || t.assignee)} — ${t.date || '—'}</div>
+        </div>
+        <button class="btn-sm" style="background:var(--red);color:white;" onclick="deleteTask(${t.id})">🗑️ حذف</button>
+      </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد مهام</p>';
+  }
+
+  const fileList = document.getElementById('settings-files-list');
+  if (fileList) {
+    fileList.innerHTML = FILES.map(f => `
+      <div class="employee-item" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="font-size:24px">${getFileIcon(f.type)}</div>
+          <div><div class="emp-name">${f.name}</div><div class="emp-role">${f.size} — ${f.owner === 'all' ? 'عام' : (EMPLOYEES.find(e => e.user === f.owner)?.name || f.owner)}</div></div>
+        </div>
+        <button class="btn-sm" style="background:var(--red);color:white;" onclick="deleteFile(${f.id})">🗑️ حذف</button>
+      </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد ملفات</p>';
+  }
 }
-function closeModal(id){ 
-  document.getElementById(id).classList.remove('active'); 
+
+async function confirmDeleteAllEmployees() {
+  if (!confirm('⚠️ حذف جميع الموظفين (ما عدا المدير)؟')) return;
+  const ids = EMPLOYEES.filter(e => e.user !== 'admin').map(e => e.id);
+  for (const id of ids) {
+    await sb.from('employees').delete().eq('id', id);
+  }
+  showToast('🗑️ تم حذف الموظفين');
+  await loadFromSupabase();
+}
+
+async function confirmDeleteAllTasks() {
+  if (!confirm('⚠️ حذف جميع المهام؟')) return;
+  const { error } = await sb.from('tasks').delete().neq('id', 0);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('🗑️ تم حذف جميع المهام');
+  await loadFromSupabase();
+}
+
+async function confirmDeleteDoneTasks() {
+  if (!confirm('حذف المهام المكتملة؟')) return;
+  const { error } = await sb.from('tasks').delete().eq('status', 'done');
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('🗑️ تم حذف المهام المكتملة');
+  await loadFromSupabase();
+}
+
+async function confirmDeleteAllFiles() {
+  if (!confirm('⚠️ حذف جميع الملفات؟')) return;
+  const { error } = await sb.from('files').delete().neq('id', 0);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('🗑️ تم حذف جميع الملفات');
+  await loadFromSupabase();
+}
+
+async function confirmResetPlatform() {
+  if (!confirm('⚠️⚠️ إعادة ضبط المنصة بالكامل؟\nسيتم حذف كل شيء وإعادة البيانات الافتراضية.')) return;
+  const code = prompt('اكتب "نعم" للتأكيد:');
+  if (code !== 'نعم') { showToast('❌ تم الإلغاء'); return; }
+  // Wipe
+  await sb.from('tasks').delete().neq('id', 0);
+  await sb.from('files').delete().neq('id', 0);
+  await sb.from('meetings').delete().neq('id', 0);
+  await sb.from('employees').delete().neq('username', 'admin');
+  showToast('🔄 تم المسح — أعد تشغيل الـ SQL Seed لو حابب البيانات الافتراضية');
+  await loadFromSupabase();
+}
+
+// ============ MODALS ============
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+  if (id !== 'video-modal-overlay') document.body.classList.add('modal-open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
   document.body.classList.remove('modal-open');
 }
-document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m && m.id!=='video-modal-overlay') closeModal(m.id); }); });
-
-// ============ NOTIFICATIONS ============
-function toggleNotifications(){ document.getElementById('notif-panel').classList.toggle('active'); }
-
-// ============ TOAST ============
-function showToast(msg, isErr=false){
-  const t=document.createElement('div'); t.className='toast';
-  t.style.background=isErr?'var(--red)':'var(--navy)'; t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),2800);
-}
-
-// ============ ADMIN SETTINGS ============
-function renderAdminSettings(){
-  if(!currentUser || !currentUser.isAdmin) return;
-  document.getElementById('admin-settings-panel').style.display='block';
-
-  // Employees list in settings
-  const empList = document.getElementById('settings-employees-list');
-  empList.innerHTML = EMPLOYEES.map(e=>`
-    <div class="employee-item" style="justify-content:space-between;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div class="emp-avatar">${e.name[0]}</div>
-        <div><div class="emp-name">${e.name}</div><div class="emp-role">${e.role} — ${e.dept}</div></div>
-      </div>
-      <button class="btn-sm" style="background:var(--red);color:white;" onclick="deleteEmployeeById(${e.id})">🗑️ حذف</button>
-    </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا يوجد موظفين</p>';
-
-  // Tasks list in settings
-  const taskList = document.getElementById('settings-tasks-list');
-  taskList.innerHTML = TASKS.map(t=>`
-    <div class="task-item" style="justify-content:space-between;">
-      <div style="flex:1;">
-        <div class="task-title ${t.done?'done':''}">${t.title}</div>
-        <div style="font-size:11px;color:var(--gray-500);">${t.assignee==='all'?'الجميع':EMPLOYEES.find(e=>e.user===t.assignee)?.name||t.assignee} — ${t.date}</div>
-      </div>
-      <button class="btn-sm" style="background:var(--red);color:white;" onclick="deleteTaskById(${t.id})">🗑️ حذف</button>
-    </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد مهام</p>';
-
-  // Files list in settings
-  const fileList = document.getElementById('settings-files-list');
-  fileList.innerHTML = FILES.map(f=>`
-    <div class="employee-item" style="justify-content:space-between;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:24px">${getFileIcon(f.type)}</div>
-        <div><div class="emp-name">${f.name}</div><div class="emp-role">${f.size} — ${f.owner==='all'?'عام':EMPLOYEES.find(e=>e.user===f.owner)?.name||f.owner}</div></div>
-      </div>
-      <button class="btn-sm" style="background:var(--red);color:white;" onclick="deleteFileById(${f.id})">🗑️ حذف</button>
-    </div>`).join('') || '<p style="color:var(--gray-500);text-align:center;padding:20px">لا توجد ملفات</p>';
-}
-
-function deleteEmployeeById(id){
-  if(!confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
-  const emp = EMPLOYEES.find(e=>e.id===id);
-  if(emp){
-    delete USERS[emp.user];
-    EMPLOYEES = EMPLOYEES.filter(e=>e.id!==id);
-    renderEmployees(); renderAdminSettings(); renderDashboard(); renderTasks(); renderFiles(); renderReports();
-    showToast('🗑️ تم حذف الموظف');
-  }
-}
-function confirmDeleteAllEmployees(){
-  if(!confirm('⚠️ هل أنت متأكد من حذف جميع الموظفين؟\nسيتم حذف جميع بيانات الموظفين ولا يمكن التراجع!')) return;
-  EMPLOYEES.forEach(e=>{ if(USERS[e.user] && !USERS[e.user].isAdmin) delete USERS[e.user]; });
-  EMPLOYEES = EMPLOYEES.filter(e=>e.user==='admin');
-  renderEmployees(); renderAdminSettings(); renderDashboard(); renderTasks(); renderFiles(); renderReports();
-  showToast('🗑️ تم حذف جميع الموظفين');
-}
-
-function deleteTaskById(id){
-  if(!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
-  TASKS = TASKS.filter(t=>t.id!==id);
-  renderTasks(); renderAdminSettings(); renderDashboard(); renderReports();
-  showToast('🗑️ تم حذف المهمة');
-}
-function confirmDeleteAllTasks(){
-  if(!confirm('⚠️ هل أنت متأكد من حذف جميع المهام؟ لا يمكن التراجع!')) return;
-  TASKS = [];
-  renderTasks(); renderAdminSettings(); renderDashboard(); renderReports();
-  showToast('🗑️ تم حذف جميع المهام');
-}
-function confirmDeleteDoneTasks(){
-  if(!confirm('هل أنت متأكد من حذف المهام المكتملة؟')) return;
-  TASKS = TASKS.filter(t=>!t.done);
-  renderTasks(); renderAdminSettings(); renderDashboard(); renderReports();
-  showToast('🗑️ تم حذف المهام المكتملة');
-}
-
-function deleteFileById(id){
-  if(!confirm('هل أنت متأكد من حذف هذا الملف؟')) return;
-  FILES = FILES.filter(f=>f.id!==id);
-  renderFiles(); renderAdminSettings();
-  showToast('🗑️ تم حذف الملف');
-}
-function confirmDeleteAllFiles(){
-  if(!confirm('⚠️ هل أنت متأكد من حذف جميع الملفات؟ لا يمكن التراجع!')) return;
-  FILES = [];
-  renderFiles(); renderAdminSettings();
-  showToast('🗑️ تم حذف جميع الملفات');
-}
-
-const DEFAULT_EMPLOYEES = [
-  { id:1, user:'ahmed', name:'أحمد محمد', role:'محاسب أول', dept:'المحاسبة', status:'online', tasks:7, done:5 },
-  { id:2, user:'sara',  name:'سارة أحمد', role:'مهندسة برمجيات', dept:'تقنية المعلومات', status:'busy', tasks:4, done:3 },
-  { id:3, user:'omar',  name:'عمر خالد', role:'مدير مبيعات', dept:'المبيعات', status:'offline', tasks:6, done:4 },
-  { id:4, user:'nour',  name:'نور علي', role:'موارد بشرية', dept:'الموارد البشرية', status:'online', tasks:3, done:3 },
-  { id:5, user:'karim', name:'كريم حسن', role:'مصمم جرافيك', dept:'التسويق', status:'online', tasks:5, done:2 },
-];
-const DEFAULT_TASKS = [
-  { id:1, title:'مراجعة تقرير الميزانية الشهري', type:'تقرير', priority:'urgent', assignee:'ahmed', date:'2026-08-12', done:false, desc:'مراجعة أرقام الميزانية وإعداد التقرير النهائي' },
-  { id:2, title:'تحديث قاعدة بيانات العملاء', type:'تطوير', priority:'normal', assignee:'sara', date:'2026-08-15', done:false, desc:'تحديث سجلات العملاء الجديدة' },
-  { id:3, title:'تواصل مع الموردين', type:'تواصل', priority:'normal', assignee:'omar', date:'2026-08-10', done:true, desc:'متابعة العروض والعقود' },
-  { id:4, title:'إعداد عقود الموظفين الجدد', type:'إداري', priority:'urgent', assignee:'nour', date:'2026-08-11', done:false, desc:'إعداد وتوقيع عقود الموظفين' },
-  { id:5, title:'تصميم بروشور المنتجات الجديدة', type:'تسويق', priority:'low', assignee:'karim', date:'2026-08-20', done:false, desc:'تصميم بروشور احترافي' },
-  { id:6, title:'اجتماع مجلس الإدارة الشهري', type:'إداري', priority:'urgent', assignee:'all', date:'2026-08-15', done:false, desc:'اجتماع شهري لمراجعة الأداء' },
-];
-const DEFAULT_FILES = [
-  { id:1, name:'تقرير مالي يوليو 2026.pdf', type:'pdf', size:'2.4 MB', date:'2026-08-01', owner:'all' },
-  { id:2, name:'جدول الرواتب.xlsx', type:'excel', size:'890 KB', date:'2026-08-03', owner:'ahmed' },
-  { id:3, name:'عقد موظف جديد.docx', type:'word', size:'145 KB', date:'2026-08-05', owner:'nour' },
-  { id:4, name:'خطة المبيعات Q3.xlsx', type:'excel', size:'1.2 MB', date:'2026-08-07', owner:'omar' },
-  { id:5, name:'تقرير تقني.pdf', type:'pdf', size:'3.1 MB', date:'2026-08-08', owner:'sara' },
-  { id:6, name:'دليل الموظف.docx', type:'word', size:'560 KB', date:'2026-07-20', owner:'all' },
-  { id:7, name:'بيانات العملاء.xlsx', type:'excel', size:'2.8 MB', date:'2026-08-02', owner:'omar' },
-  { id:8, name:'سياسة الشركة.pdf', type:'pdf', size:'420 KB', date:'2026-07-15', owner:'all' },
-];
-
-function confirmResetPlatform(){
-  if(!confirm('⚠️⚠️⚠️\nهل أنت متأكد تماماً من إعادة ضبط المنصة؟\n\nسيتم:\n• حذف جميع الموظفين (ما عدا المدير)\n• حذف جميع المهام\n• حذف جميع الملفات\n• إعادة البيانات الافتراضية\n\nلا يمكن التراجع أبداً!')) return;
-  if(!confirm('تأكيد نهائي: اكتب "نعم" في الرسالة التالية للتأكيد')){
-    const code = prompt('اكتب "نعم" للتأكيد:');
-    if(code !== 'نعم'){ showToast('❌ تم إلغاء العملية'); return; }
-  }
-  // Reset employees (keep admin)
-  EMPLOYEES = [...DEFAULT_EMPLOYEES];
-  // Reset tasks
-  TASKS = [...DEFAULT_TASKS];
-  // Reset files
-  FILES = [...DEFAULT_FILES];
-  // Reset users (keep admin)
-  const adminUser = USERS['admin'];
-  USERS['admin'] = adminUser;
-  EMPLOYEES.forEach(e=>{
-    USERS[e.user] = { pass:'123456', name:e.name, role:e.role, isAdmin:false, dept:e.dept };
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m && m.id !== 'video-modal-overlay') closeModal(m.id);
   });
-  renderEmployees(); renderTasks(); renderFiles(); renderMeetings(); renderReports(); renderDashboard(); renderAdminSettings();
-  showToast('🔄 تم إعادة ضبط المنصة بنجاح');
+});
+
+function toggleNotifications() {
+  document.getElementById('notif-panel')?.classList.toggle('active');
 }
 
 // Mobile menu
-if(window.innerWidth<=768) document.getElementById('menu-toggle').style.display='flex';
-window.addEventListener('resize',()=>{ document.getElementById('menu-toggle').style.display=window.innerWidth<=768?'flex':'none'; });
-document.addEventListener('click',e=>{ if(!e.target.closest('#notif-panel')&&!e.target.closest('.topbar-btn')) document.getElementById('notif-panel').classList.remove('active'); });
+if (window.innerWidth <= 768) {
+  const btn = document.getElementById('menu-toggle');
+  if (btn) btn.style.display = 'flex';
+}
+window.addEventListener('resize', () => {
+  const btn = document.getElementById('menu-toggle');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notif-panel') && !e.target.closest('.topbar-btn')) {
+    document.getElementById('notif-panel')?.classList.remove('active');
+  }
+});
+
+// Date in topbar
+(function () {
+  const d = document.getElementById('topbar-date');
+  if (d) {
+    const now = new Date();
+    d.textContent = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+})();
 </script>
 </body>
 </html>
