@@ -1513,17 +1513,30 @@ function openFile(url) {
   window.open(url, '_blank');
 }
 
-function downloadFile(url, name) {
+async function downloadFile(url, name) {
   if (!url) { showToast('❌ لا يوجد رابط', 'error'); return; }
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name || 'file';
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  showToast('⬇️ جاري التنزيل...');
+  showToast('⬇️ جاري تحضير التنزيل...');
+  try {
+    // جلب الملف كـ Blob عشان التنزيل يشتغل حتى لو الرابط من دومين تاني (Supabase)
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = name || 'file';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    showToast('✅ تم بدء التنزيل');
+  } catch (err) {
+    console.error(err);
+    // fallback: فتح في تاب جديد لو فشل الـ fetch (CORS)
+    showToast('⚠️ فتح الملف في نافذة جديدة (لو عايز تنزيله: كليك يمين → حفظ باسم)', 'error');
+    window.open(url, '_blank');
+  }
 }
 
 async function deleteFile(id) {
