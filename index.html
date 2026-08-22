@@ -252,6 +252,75 @@
     border: 1px solid var(--gray-200); transition: all 0.25s;
   }
   .training-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-color: var(--gold); }
+
+  /* Training: online + chat + live */
+  .training-split {
+    display: grid; grid-template-columns: 280px 1fr; gap: 16px; margin-bottom: 20px;
+  }
+  @media (max-width: 900px) {
+    .training-split { grid-template-columns: 1fr; }
+  }
+  .train-side-panel {
+    background: var(--white); border-radius: 16px; border: 1px solid var(--gray-200);
+    display: flex; flex-direction: column; max-height: 420px; overflow: hidden;
+  }
+  .train-side-header {
+    padding: 14px 16px; border-bottom: 1px solid var(--gray-100);
+    font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .train-online-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .train-online-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  }
+  .train-online-item .dot {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  }
+  .train-online-item .dot.on { background: var(--green); box-shadow: 0 0 0 3px rgba(46,204,113,0.25); }
+  .train-online-item .dot.off { background: #bbb; }
+  .train-chat-panel {
+    background: var(--white); border-radius: 16px; border: 1px solid var(--gray-200);
+    display: flex; flex-direction: column; max-height: 420px; min-height: 320px;
+  }
+  .train-chat-messages {
+    flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px;
+    background: var(--gray-100);
+  }
+  .train-chat-msg {
+    background: white; border-radius: 12px; padding: 8px 12px; max-width: 85%;
+    border: 1px solid var(--gray-200); align-self: flex-start;
+  }
+  .train-chat-msg.mine {
+    align-self: flex-end; background: rgba(201,168,76,0.12);
+    border-color: rgba(201,168,76,0.35);
+  }
+  .train-chat-msg .author { font-size: 11px; font-weight: 700; color: var(--gold); }
+  .train-chat-msg .text { font-size: 13px; margin-top: 2px; word-break: break-word; }
+  .train-chat-msg .time { font-size: 10px; color: var(--gray-500); margin-top: 4px; }
+  .train-chat-input-row {
+    display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--gray-200);
+  }
+  .train-chat-input-row input {
+    flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--gray-200);
+    font-family: 'Cairo', sans-serif; font-size: 13px; outline: none;
+  }
+  .train-chat-input-row input:focus { border-color: var(--gold); }
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--red); color: white; font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+  }
+  .live-badge .rec-dot { margin: 0; background: white; }
+  .live-sessions-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px;
+  }
+  .live-session-card {
+    background: var(--white); border-radius: 14px; padding: 16px;
+    border: 1px solid var(--gray-200); transition: all 0.2s;
+  }
+  .live-session-card.live-now {
+    border-color: var(--red); box-shadow: 0 0 0 2px rgba(231,76,60,0.15);
+  }
+  .live-session-card:hover { border-color: var(--gold); }
   .platform-choice-box {
     background: rgba(255,255,255,0.05); backdrop-filter: blur(20px);
     border: 1px solid rgba(201,168,76,0.3); border-radius: 20px;
@@ -1058,16 +1127,57 @@
         <div class="training-hero">
           <div>
             <h2>🎓 منصة تدريب الموظفين</h2>
-            <p>سجّل شرحاً على سطح المكتب (شاشة + صوت)، يُضغط تلقائياً ويُحفظ على المنصة</p>
+            <p>دردشة · حالة الاتصال · بث مباشر بمواعيد · تسجيل وحفظ تلقائي كفيديو</p>
+            <div id="live-indicator-bar" style="display:none;margin-top:12px;">
+              <span class="live-badge"><span class="rec-dot"></span> بث مباشر جارٍ الآن</span>
+              <span id="live-indicator-title" style="margin-right:10px;font-size:13px;opacity:0.9;"></span>
+            </div>
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn-meet primary" onclick="document.getElementById('rec-panel').scrollIntoView({behavior:'smooth'})">⏺️ بدء تسجيل تدريب</button>
+            <button class="btn-meet primary" onclick="startLiveTrainingNow()">📡 بدء بث مباشر</button>
+            <button class="btn-meet secondary" onclick="openModal('schedule-live-modal')">📅 جدولة بث</button>
+            <button class="btn-meet secondary" onclick="document.getElementById('rec-panel').scrollIntoView({behavior:'smooth'})">⏺️ تسجيل فقط</button>
           </div>
+        </div>
+
+        <!-- Online employees + Chat -->
+        <div class="training-split">
+          <div class="train-side-panel">
+            <div class="train-side-header">
+              <span>👥 الموظفون</span>
+              <span id="online-count-badge" style="font-size:11px;color:var(--green);font-weight:600;">0 متصل</span>
+            </div>
+            <div class="train-online-list" id="train-online-list">
+              <p style="color:var(--gray-500);text-align:center;padding:20px;font-size:12px;">جاري التحميل...</p>
+            </div>
+          </div>
+          <div class="train-chat-panel">
+            <div class="train-side-header">
+              <span>💬 دردشة التدريب</span>
+              <button class="btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="loadTrainingChat()">🔄</button>
+            </div>
+            <div class="train-chat-messages" id="train-chat-messages">
+              <div style="text-align:center;color:var(--gray-500);font-size:12px;padding:30px;">لا توجد رسائل بعد — اكتب للبدء</div>
+            </div>
+            <div class="train-chat-input-row">
+              <input type="text" id="train-chat-input" placeholder="اكتب رسالة للفريق..." onkeydown="if(event.key==='Enter')sendTrainingChat()">
+              <button class="btn-primary" style="padding:10px 16px;" onclick="sendTrainingChat()">إرسال</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scheduled / Live sessions -->
+        <div class="card-header-flex">
+          <h2 style="font-size:16px;">📡 الجلسات المباشرة والمجدولة</h2>
+          <button class="btn-secondary" onclick="loadLiveSessions()">🔄 تحديث</button>
+        </div>
+        <div class="live-sessions-grid" id="live-sessions-grid">
+          <p style="color:var(--gray-500);text-align:center;padding:20px;grid-column:1/-1;font-size:13px;">لا توجد جلسات مجدولة</p>
         </div>
 
         <div class="rec-panel" id="rec-panel">
           <div class="card-header-flex">
-            <h2 style="font-size:16px;">⏺️ تسجيل شرح جديد</h2>
+            <h2 style="font-size:16px;">⏺️ تسجيل / بث شرح</h2>
             <span id="rec-timer-label" style="font-size:13px;color:var(--gray-500);">00:00</span>
           </div>
           <div class="input-group">
@@ -1096,19 +1206,20 @@
             </div>
           </div>
           <video id="rec-preview" class="rec-preview" muted playsinline></video>
-          <div class="rec-status" id="rec-status">اضغط «بدء التسجيل» واختر الشاشة/النافذة المراد شرحها</div>
+          <div class="rec-status" id="rec-status">اضغط «بدء التسجيل» أو «بث مباشر» واختر الشاشة/النافذة المراد شرحها</div>
           <div class="rec-controls">
-            <button class="btn-primary" id="btn-start-rec" onclick="startTrainingRecord()">⏺️ بدء التسجيل</button>
-            <button class="btn-secondary" id="btn-stop-rec" onclick="stopTrainingRecord()" style="display:none;background:var(--red);color:white;border-color:var(--red);">⏹️ إيقاف وحفظ</button>
+            <button class="btn-primary" id="btn-start-rec" onclick="startTrainingRecord(false)">⏺️ بدء التسجيل</button>
+            <button class="btn-primary" id="btn-start-live" onclick="startTrainingRecord(true)" style="background:linear-gradient(135deg,#E74C3C,#C0392B);">📡 بدء بث + تسجيل</button>
+            <button class="btn-secondary" id="btn-stop-rec" onclick="stopTrainingRecord()" style="display:none;background:var(--red);color:white;border-color:var(--red);">⏹️ إنهاء وحفظ الفيديو</button>
             <button class="btn-secondary" id="btn-cancel-rec" onclick="cancelTrainingRecord()" style="display:none;">إلغاء</button>
           </div>
           <p style="font-size:11px;color:var(--gray-500);margin-top:12px;text-align:center;">
-            💡 يتم الضغط أثناء التسجيل عبر bitrate منخفض (WebM/VP8 أو VP9). يتطلب HTTPS أو localhost.
+            💡 البث المباشر يسجّل الشاشة أثناء الشرح، وعند الإيقاف يُحفظ تلقائياً كملف فيديو في المنصة. يتطلب HTTPS أو localhost.
           </p>
         </div>
 
         <div class="card-header-flex" style="margin-top:10px;">
-          <h2 style="font-size:16px;">📚 التدريبات المحفوظة</h2>
+          <h2 style="font-size:16px;">📚 التدريبات المحفوظة (فيديو)</h2>
           <button class="btn-secondary" onclick="loadTrainings()">🔄 تحديث</button>
         </div>
         <div class="trainings-grid" id="trainings-grid">
@@ -1287,6 +1398,21 @@
   </div>
 </div>
 
+<!-- Schedule Live Training Modal -->
+<div class="modal-overlay" id="schedule-live-modal">
+  <div class="modal">
+    <h3>📅 جدولة بث تدريب مباشر</h3>
+    <div class="input-group"><label>عنوان البث *</label><input type="text" id="live-title" placeholder="مثال: شرح نظام الحضور والانصراف"></div>
+    <div class="input-group"><label>وصف</label><textarea id="live-desc" placeholder="ماذا سيُشرح في هذا البث؟"></textarea></div>
+    <div class="input-group"><label>التاريخ *</label><input type="date" id="live-date"></div>
+    <div class="input-group"><label>الوقت *</label><input type="time" id="live-time"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('schedule-live-modal')">إلغاء</button>
+      <button class="btn-primary" onclick="scheduleLiveSession()">📅 جدولة البث</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // AlexTech Cloud - Real Supabase Integration
@@ -1331,6 +1457,12 @@ let trainingStream = null;
 let trainingRecTimer = null;
 let trainingRecSeconds = 0;
 let trainingRecordedBlob = null;
+let isLiveTraining = false;
+let currentLiveSessionId = null;
+let LIVE_SESSIONS = [];
+let trainingChatMessages = [];
+let trainingChatChannel = null;
+let trainingChatPollTimer = null;
 
 // ============ HELPERS ============
 function showToast(msg, type = 'success') {
@@ -1480,6 +1612,7 @@ function startPresenceHeartbeat() {
         renderDashboard();
         renderEmployees();
         renderReports();
+        renderTrainingOnlineList();
       }
     } catch (_) {}
   }, 25000);
@@ -1571,18 +1704,19 @@ async function enterPlatform(platform) {
 
   if (currentPlatform === 'training') {
     showPage('training');
-    // تمييز عنصر الناف بار
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const trainNav = Array.from(document.querySelectorAll('.nav-item')).find(n => n.textContent.includes('التدريب'));
     if (trainNav) trainNav.classList.add('active');
-    loadTrainings();
+    initTrainingPlatform();
   } else {
     showPage('dashboard');
+    stopTrainingChat();
   }
 }
 
 async function doLogout() {
   stopPresenceHeartbeat();
+  stopTrainingChat();
   await setUserOffline();
   localStorage.removeItem('alextech_token');
   localStorage.removeItem('alextech_user');
@@ -1630,10 +1764,11 @@ function getTrainingBitrate() {
   return 1200000;
 }
 
-async function startTrainingRecord() {
+async function startTrainingRecord(asLive) {
   const title = (document.getElementById('training-title') || {}).value.trim();
   if (!title) {
     showToast('❌ أدخل عنوان التدريب أولاً', 'error');
+    document.getElementById('rec-panel')?.scrollIntoView({ behavior: 'smooth' });
     return;
   }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
@@ -1645,12 +1780,12 @@ async function startTrainingRecord() {
     return;
   }
 
+  isLiveTraining = !!asLive;
   const wantMic = (document.getElementById('training-mic') || {}).value !== 'no';
   try {
-    // شاشة سطح المكتب
     const displayStream = await navigator.mediaDevices.getDisplayMedia({
       video: { frameRate: 15, width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: true // صوت النظام إن توفر
+      audio: true
     });
 
     let tracks = [...displayStream.getTracks()];
@@ -1684,9 +1819,14 @@ async function startTrainingRecord() {
     trainingRecorder.onstop = async () => {
       trainingRecordedBlob = new Blob(trainingChunks, { type: 'video/webm' });
       await saveTrainingRecording(title);
+      if (isLiveTraining) {
+        await endLiveSessionMark();
+        broadcastTrainingEvent('live_ended', { title });
+        pushTrainingSystemMessage('📴 انتهى البث المباشر: ' + title + ' — تم حفظ الفيديو في المنصة');
+      }
+      isLiveTraining = false;
     };
 
-    // معاينة
     const preview = document.getElementById('rec-preview');
     const status = document.getElementById('rec-status');
     if (preview) {
@@ -1696,9 +1836,14 @@ async function startTrainingRecord() {
       preview.play().catch(() => {});
     }
     if (status) {
-      status.innerHTML = '<span class="rec-dot"></span> جاري التسجيل... اشرح على سطح المكتب ثم اضغط إيقاف';
+      status.innerHTML = isLiveTraining
+        ? '<span class="rec-dot"></span> <strong style="color:var(--red)">بث مباشر + تسجيل</strong> — اشرح ثم اضغط إنهاء لحفظ الفيديو'
+        : '<span class="rec-dot"></span> جاري التسجيل... اشرح على سطح المكتب ثم اضغط إيقاف';
     }
-    document.getElementById('btn-start-rec').style.display = 'none';
+    const btnStart = document.getElementById('btn-start-rec');
+    const btnLive = document.getElementById('btn-start-live');
+    if (btnStart) btnStart.style.display = 'none';
+    if (btnLive) btnLive.style.display = 'none';
     document.getElementById('btn-stop-rec').style.display = '';
     document.getElementById('btn-cancel-rec').style.display = '';
 
@@ -1712,15 +1857,24 @@ async function startTrainingRecord() {
       if (el) el.textContent = m + ':' + s;
     }, 1000);
 
-    // لو المستخدم أوقف مشاركة الشاشة من المتصفح
     displayStream.getVideoTracks()[0].onended = () => {
       if (trainingRecorder && trainingRecorder.state === 'recording') stopTrainingRecord();
     };
 
-    trainingRecorder.start(1000); // chunk كل ثانية
-    showToast('⏺️ بدأ التسجيل — جودة مضغوطة');
+    trainingRecorder.start(1000);
+
+    if (isLiveTraining) {
+      setLiveIndicator(true, title);
+      await markLiveSessionActive(title);
+      broadcastTrainingEvent('live_started', { title, by: currentUser ? currentUser.name : '' });
+      pushTrainingSystemMessage('🔴 بدأ بث مباشر: ' + title + (currentUser ? ' — بواسطة ' + currentUser.name : ''));
+      showToast('📡 البث المباشر يعمل — سيتم حفظ الفيديو عند الإيقاف');
+    } else {
+      showToast('⏺️ بدأ التسجيل — جودة مضغوطة');
+    }
   } catch (err) {
     console.error(err);
+    isLiveTraining = false;
     if (err.name === 'NotAllowedError') showToast('❌ تم رفض مشاركة الشاشة', 'error');
     else showToast('⚠️ تعذر بدء التسجيل: ' + (err.message || err.name), 'error');
   }
@@ -1735,11 +1889,15 @@ function stopTrainingRecord() {
     trainingStream.getTracks().forEach(t => t.stop());
     trainingStream = null;
   }
-  document.getElementById('btn-start-rec').style.display = '';
+  const btnStart = document.getElementById('btn-start-rec');
+  const btnLive = document.getElementById('btn-start-live');
+  if (btnStart) btnStart.style.display = '';
+  if (btnLive) btnLive.style.display = '';
   document.getElementById('btn-stop-rec').style.display = 'none';
   document.getElementById('btn-cancel-rec').style.display = 'none';
+  setLiveIndicator(false);
   const status = document.getElementById('rec-status');
-  if (status) status.textContent = '⏳ جاري ضغط وحفظ التسجيل...';
+  if (status) status.textContent = '⏳ جاري ضغط وحفظ التسجيل كفيديو...';
 }
 
 function cancelTrainingRecord() {
@@ -1754,13 +1912,22 @@ function cancelTrainingRecord() {
   }
   trainingChunks = [];
   trainingRecordedBlob = null;
-  document.getElementById('btn-start-rec').style.display = '';
+  if (isLiveTraining) {
+    endLiveSessionMark();
+    broadcastTrainingEvent('live_ended', { title: 'cancelled' });
+  }
+  isLiveTraining = false;
+  setLiveIndicator(false);
+  const btnStart = document.getElementById('btn-start-rec');
+  const btnLive = document.getElementById('btn-start-live');
+  if (btnStart) btnStart.style.display = '';
+  if (btnLive) btnLive.style.display = '';
   document.getElementById('btn-stop-rec').style.display = 'none';
   document.getElementById('btn-cancel-rec').style.display = 'none';
   const preview = document.getElementById('rec-preview');
   if (preview) { preview.srcObject = null; preview.style.display = 'none'; }
   const status = document.getElementById('rec-status');
-  if (status) status.textContent = 'تم الإلغاء — اضغط بدء التسجيل للمحاولة مرة أخرى';
+  if (status) status.textContent = 'تم الإلغاء — اضغط بدء التسجيل أو البث للمحاولة مرة أخرى';
   showToast('تم إلغاء التسجيل');
 }
 
@@ -1917,6 +2084,359 @@ async function deleteTraining(id) {
   }
 }
 
+// ============ TRAINING: ONLINE / CHAT / LIVE ============
+function initTrainingPlatform() {
+  loadTrainings();
+  renderTrainingOnlineList();
+  loadLiveSessions();
+  startTrainingChat();
+  loadTrainingChat();
+}
+
+function renderTrainingOnlineList() {
+  const list = document.getElementById('train-online-list');
+  const badge = document.getElementById('online-count-badge');
+  if (!list) return;
+  const emps = (EMPLOYEES || []).filter(e => e.user !== 'admin');
+  const online = emps.filter(e => e.status === 'online' || e.status === 'busy');
+  if (badge) badge.textContent = online.length + ' متصل';
+  if (!emps.length) {
+    list.innerHTML = '<p style="color:var(--gray-500);text-align:center;padding:20px;font-size:12px;">لا يوجد موظفين</p>';
+    return;
+  }
+  // online first
+  const sorted = [...emps].sort((a, b) => {
+    const ao = (a.status === 'online' || a.status === 'busy') ? 0 : 1;
+    const bo = (b.status === 'online' || b.status === 'busy') ? 0 : 1;
+    return ao - bo;
+  });
+  list.innerHTML = sorted.map(e => {
+    const on = e.status === 'online' || e.status === 'busy';
+    const label = e.status === 'busy' ? 'مشغول' : (on ? 'متصل' : 'غير متصل');
+    return `
+      <div class="train-online-item">
+        <span class="dot ${on ? 'on' : 'off'}"></span>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.name}</div>
+          <div style="font-size:11px;color:var(--gray-500);">${e.role || e.dept || ''} · ${label}</div>
+        </div>
+        <div class="emp-avatar" style="width:28px;height:28px;font-size:11px;">${(e.name || '?')[0]}</div>
+      </div>`;
+  }).join('');
+}
+
+function setLiveIndicator(on, title) {
+  const bar = document.getElementById('live-indicator-bar');
+  const tEl = document.getElementById('live-indicator-title');
+  if (!bar) return;
+  bar.style.display = on ? 'block' : 'none';
+  if (tEl) tEl.textContent = title || '';
+}
+
+function startLiveTrainingNow() {
+  const titleInp = document.getElementById('training-title');
+  if (titleInp && !titleInp.value.trim()) {
+    titleInp.value = 'بث مباشر — ' + new Date().toLocaleString('ar-EG');
+  }
+  document.getElementById('rec-panel')?.scrollIntoView({ behavior: 'smooth' });
+  startTrainingRecord(true);
+}
+
+async function scheduleLiveSession() {
+  const title = (document.getElementById('live-title') || {}).value.trim();
+  const desc = (document.getElementById('live-desc') || {}).value.trim() || '';
+  const date = (document.getElementById('live-date') || {}).value;
+  const time = (document.getElementById('live-time') || {}).value;
+  if (!title || !date || !time) {
+    showToast('❌ أكمل العنوان والتاريخ والوقت', 'error');
+    return;
+  }
+  const scheduled_at = `${date}T${time}:00+03`;
+  const row = {
+    title,
+    description: desc,
+    scheduled_at,
+    status: 'scheduled',
+    created_by: currentUser ? currentUser.username : 'unknown',
+    created_by_name: currentUser ? currentUser.name : ''
+  };
+  let saved = false;
+  try {
+    const { error } = await sb.from('live_sessions').insert([row]);
+    if (!error) saved = true;
+    else console.warn('live_sessions:', error.message);
+  } catch (e) { console.warn(e); }
+
+  // fallback localStorage
+  if (!saved) {
+    const local = JSON.parse(localStorage.getItem('alextech_live_sessions') || '[]');
+    row.id = 'local_' + Date.now();
+    local.unshift(row);
+    localStorage.setItem('alextech_live_sessions', JSON.stringify(local));
+    saved = true;
+  }
+
+  closeModal('schedule-live-modal');
+  document.getElementById('live-title').value = '';
+  document.getElementById('live-desc').value = '';
+  showToast('📅 تم جدولة البث المباشر');
+  pushTrainingSystemMessage('📅 تم جدولة بث: ' + title + ' — ' + date + ' ' + time);
+  loadLiveSessions();
+}
+
+async function loadLiveSessions() {
+  const grid = document.getElementById('live-sessions-grid');
+  if (!grid) return;
+  LIVE_SESSIONS = [];
+  try {
+    const { data, error } = await sb.from('live_sessions').select('*').order('scheduled_at', { ascending: true });
+    if (!error && data) LIVE_SESSIONS = data;
+  } catch (_) {}
+  if (!LIVE_SESSIONS.length) {
+    try {
+      LIVE_SESSIONS = JSON.parse(localStorage.getItem('alextech_live_sessions') || '[]');
+    } catch (_) { LIVE_SESSIONS = []; }
+  }
+  // merge any active live flag from local
+  if (!LIVE_SESSIONS.length) {
+    grid.innerHTML = '<p style="color:var(--gray-500);text-align:center;padding:20px;grid-column:1/-1;font-size:13px;">لا توجد جلسات مجدولة — اضغط «جدولة بث»</p>';
+    return;
+  }
+  grid.innerHTML = LIVE_SESSIONS.map(s => {
+    const isLive = s.status === 'live';
+    const isDone = s.status === 'ended' || s.status === 'done';
+    const when = s.scheduled_at ? String(s.scheduled_at).replace('T', ' ').slice(0, 16) : '—';
+    const statusLabel = isLive ? '🔴 مباشر الآن' : (isDone ? '✅ انتهى' : '📅 مجدول');
+    return `
+      <div class="live-session-card ${isLive ? 'live-now' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong style="font-size:14px;">${s.title || 'بث'}</strong>
+          <span style="font-size:11px;">${statusLabel}</span>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${s.description || ''}</div>
+        <div style="font-size:11px;color:var(--gray-500);margin-bottom:12px;">⏰ ${when} · 👤 ${s.created_by_name || s.created_by || '—'}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${!isDone && currentUser ? `<button class="btn-sm gold" onclick="startScheduledLive('${String(s.id).replace(/'/g,"\\'")}')">📡 بدء البث</button>` : ''}
+          ${currentUser && currentUser.isAdmin ? `<button class="btn-sm outline" onclick="deleteLiveSession('${String(s.id).replace(/'/g,"\\'")}')">🗑️</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function startScheduledLive(id) {
+  const s = LIVE_SESSIONS.find(x => String(x.id) === String(id));
+  if (!s) return;
+  currentLiveSessionId = s.id;
+  const titleInp = document.getElementById('training-title');
+  const descInp = document.getElementById('training-desc');
+  if (titleInp) titleInp.value = s.title || '';
+  if (descInp) descInp.value = s.description || '';
+  document.getElementById('rec-panel')?.scrollIntoView({ behavior: 'smooth' });
+  startTrainingRecord(true);
+}
+
+async function markLiveSessionActive(title) {
+  const status = 'live';
+  if (currentLiveSessionId && !String(currentLiveSessionId).startsWith('local_')) {
+    try {
+      await sb.from('live_sessions').update({ status }).eq('id', currentLiveSessionId);
+    } catch (_) {}
+  } else if (currentLiveSessionId) {
+    const local = JSON.parse(localStorage.getItem('alextech_live_sessions') || '[]');
+    const i = local.findIndex(x => String(x.id) === String(currentLiveSessionId));
+    if (i >= 0) { local[i].status = status; localStorage.setItem('alextech_live_sessions', JSON.stringify(local)); }
+  } else {
+    // create ephemeral live row
+    try {
+      const { data } = await sb.from('live_sessions').insert([{
+        title, status: 'live', scheduled_at: new Date().toISOString(),
+        created_by: currentUser ? currentUser.username : 'unknown',
+        created_by_name: currentUser ? currentUser.name : ''
+      }]).select('id').maybeSingle();
+      if (data && data.id) currentLiveSessionId = data.id;
+    } catch (_) {}
+  }
+  loadLiveSessions();
+}
+
+async function endLiveSessionMark() {
+  if (!currentLiveSessionId) { loadLiveSessions(); return; }
+  if (!String(currentLiveSessionId).startsWith('local_')) {
+    try {
+      await sb.from('live_sessions').update({ status: 'ended' }).eq('id', currentLiveSessionId);
+    } catch (_) {}
+  } else {
+    const local = JSON.parse(localStorage.getItem('alextech_live_sessions') || '[]');
+    const i = local.findIndex(x => String(x.id) === String(currentLiveSessionId));
+    if (i >= 0) { local[i].status = 'ended'; localStorage.setItem('alextech_live_sessions', JSON.stringify(local)); }
+  }
+  currentLiveSessionId = null;
+  loadLiveSessions();
+}
+
+async function deleteLiveSession(id) {
+  if (!confirm('حذف هذه الجلسة؟')) return;
+  if (String(id).startsWith('local_')) {
+    let local = JSON.parse(localStorage.getItem('alextech_live_sessions') || '[]');
+    local = local.filter(x => String(x.id) !== String(id));
+    localStorage.setItem('alextech_live_sessions', JSON.stringify(local));
+  } else {
+    try { await sb.from('live_sessions').delete().eq('id', id); } catch (_) {}
+  }
+  showToast('🗑️ تم الحذف');
+  loadLiveSessions();
+}
+
+// --- Training chat (Realtime + fallback polling / local) ---
+function startTrainingChat() {
+  stopTrainingChat();
+  try {
+    trainingChatChannel = sb.channel('training-room', { config: { broadcast: { self: true } } });
+    trainingChatChannel
+      .on('broadcast', { event: 'chat' }, ({ payload }) => {
+        if (!payload) return;
+        appendTrainingChatMessage(payload, false);
+      })
+      .on('broadcast', { event: 'event' }, ({ payload }) => {
+        if (!payload) return;
+        if (payload.type === 'live_started') {
+          setLiveIndicator(true, payload.title || '');
+          showToast('🔴 بث مباشر بدأ: ' + (payload.title || ''));
+          loadLiveSessions();
+        }
+        if (payload.type === 'live_ended') {
+          setLiveIndicator(false);
+          showToast('📴 انتهى البث — الفيديو محفوظ في المنصة');
+          loadLiveSessions();
+          loadTrainings();
+        }
+      })
+      .subscribe();
+  } catch (e) {
+    console.warn('realtime chat', e);
+  }
+  // poll DB messages if table exists
+  trainingChatPollTimer = setInterval(loadTrainingChat, 15000);
+}
+
+function stopTrainingChat() {
+  if (trainingChatChannel) {
+    try { sb.removeChannel(trainingChatChannel); } catch (_) {}
+    trainingChatChannel = null;
+  }
+  if (trainingChatPollTimer) {
+    clearInterval(trainingChatPollTimer);
+    trainingChatPollTimer = null;
+  }
+}
+
+function broadcastTrainingEvent(type, data) {
+  try {
+    if (trainingChatChannel) {
+      trainingChatChannel.send({
+        type: 'broadcast',
+        event: 'event',
+        payload: { type, ...data }
+      });
+    }
+  } catch (_) {}
+}
+
+async function sendTrainingChat() {
+  const input = document.getElementById('train-chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const msg = {
+    author: currentUser ? currentUser.name : 'ضيف',
+    username: currentUser ? currentUser.username : '',
+    text,
+    time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    ts: Date.now(),
+    mine: true
+  };
+  input.value = '';
+  appendTrainingChatMessage(msg, true);
+  // Realtime
+  try {
+    if (trainingChatChannel) {
+      await trainingChatChannel.send({
+        type: 'broadcast',
+        event: 'chat',
+        payload: { ...msg, mine: false }
+      });
+    }
+  } catch (_) {}
+  // Persist if table exists
+  try {
+    await sb.from('training_chat').insert([{
+      author: msg.author,
+      username: msg.username,
+      text: msg.text
+    }]);
+  } catch (_) {}
+}
+
+function pushTrainingSystemMessage(text) {
+  appendTrainingChatMessage({
+    author: 'النظام',
+    text,
+    time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    system: true
+  }, true);
+}
+
+function appendTrainingChatMessage(msg, forceRender) {
+  if (!msg || !msg.text) return;
+  // avoid exact dupes by ts
+  if (msg.ts && trainingChatMessages.some(m => m.ts === msg.ts && m.username === msg.username)) return;
+  if (currentUser && msg.username === currentUser.username && !msg.mine && !forceRender) {
+    // already added as mine locally when sending
+    return;
+  }
+  const isMine = msg.mine || (currentUser && msg.username === currentUser.username);
+  trainingChatMessages.push({ ...msg, mine: isMine });
+  if (trainingChatMessages.length > 200) trainingChatMessages = trainingChatMessages.slice(-200);
+  renderTrainingChat();
+}
+
+function renderTrainingChat() {
+  const box = document.getElementById('train-chat-messages');
+  if (!box) return;
+  if (!trainingChatMessages.length) {
+    box.innerHTML = '<div style="text-align:center;color:var(--gray-500);font-size:12px;padding:30px;">لا توجد رسائل بعد — اكتب للبدء</div>';
+    return;
+  }
+  box.innerHTML = trainingChatMessages.map(m => `
+    <div class="train-chat-msg ${m.mine ? 'mine' : ''} ${m.system ? '' : ''}" ${m.system ? 'style="align-self:center;background:#FEF9E7;border-color:#FAD7A0;max-width:95%;"' : ''}>
+      <div class="author">${m.author || '—'}</div>
+      <div class="text">${String(m.text).replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div class="time">${m.time || ''}</div>
+    </div>
+  `).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function loadTrainingChat() {
+  try {
+    const { data, error } = await sb.from('training_chat').select('*').order('id', { ascending: true }).limit(80);
+    if (error || !data) return;
+    const existing = new Set(trainingChatMessages.map(m => (m.username || '') + '|' + m.text + '|' + (m.time || '')));
+    data.forEach(row => {
+      const key = (row.username || '') + '|' + row.text + '|' + '';
+      if (existing.has(key)) return;
+      trainingChatMessages.push({
+        author: row.author || row.username || '—',
+        username: row.username || '',
+        text: row.text,
+        time: row.created_at ? new Date(row.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '',
+        mine: currentUser && row.username === currentUser.username
+      });
+    });
+    renderTrainingChat();
+  } catch (_) {}
+}
+
 // ============ PAGES ============
 
 function showAdminNav(isAdmin) {
@@ -1936,7 +2456,7 @@ function showPage(pageId, navEl) {
   const panel = document.getElementById('notif-panel');
   if (panel) panel.classList.remove('active');
   if (pageId === 'settings' && currentUser && currentUser.isAdmin) renderAdminSettings();
-  if (pageId === 'training') loadTrainings();
+  if (pageId === 'training') initTrainingPlatform();
 }
 
 // ============ DASHBOARD ============
