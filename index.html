@@ -771,6 +771,47 @@
     font-size:12px; font-weight:700; color:var(--navy-dark); margin-left:8px; vertical-align:middle;
   }
 
+
+  /* LIVE VIEWER */
+  .live-join-banner {
+    background: linear-gradient(135deg, #E74C3C, #C0392B);
+    color: white; border-radius: 16px; padding: 18px 22px;
+    margin-bottom: 18px; display: none; align-items: center;
+    justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    box-shadow: 0 8px 24px rgba(231,76,60,0.35);
+    animation: livePulse 2s ease-in-out infinite;
+  }
+  .live-join-banner.show { display: flex; }
+  @keyframes livePulse {
+    0%, 100% { box-shadow: 0 8px 24px rgba(231,76,60,0.35); }
+    50% { box-shadow: 0 8px 32px rgba(231,76,60,0.55); }
+  }
+  .live-viewer-modal {
+    background: var(--navy-dark); border-radius: 20px; width: 95%; max-width: 960px;
+    overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  }
+  .live-viewer-video-wrap {
+    background: #0a0f1a; aspect-ratio: 16/9; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .live-viewer-video-wrap video {
+    width: 100%; height: 100%; object-fit: contain; background: #000;
+  }
+  .live-viewer-placeholder {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    color: rgba(255,255,255,0.6); font-size: 14px; text-align: center; padding: 20px;
+  }
+  .live-viewer-footer {
+    padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .live-viewer-footer .info { color: rgba(255,255,255,0.75); font-size: 13px; }
+  .live-viewers-count {
+    font-size: 12px; color: var(--gold); background: rgba(201,168,76,0.15);
+    padding: 4px 10px; border-radius: 20px;
+  }
+
   /* ALERT */
   .alert { padding:12px 18px; border-radius:10px; font-size:13px; margin-bottom:15px; }
   .alert.info { background:#EBF5FB; color:#1A5276; border:1px solid #AED6F1; }
@@ -1127,7 +1168,7 @@
         <div class="training-hero">
           <div>
             <h2>🎓 منصة تدريب الموظفين</h2>
-            <p>دردشة · حالة الاتصال · بث مباشر بمواعيد · تسجيل وحفظ تلقائي كفيديو</p>
+            <p>دردشة · حالة الاتصال · بث مباشر يشاهده الموظفون · تسجيل وحفظ تلقائي كفيديو</p>
             <div id="live-indicator-bar" style="display:none;margin-top:12px;">
               <span class="live-badge"><span class="rec-dot"></span> بث مباشر جارٍ الآن</span>
               <span id="live-indicator-title" style="margin-right:10px;font-size:13px;opacity:0.9;"></span>
@@ -1138,6 +1179,18 @@
             <button class="btn-meet secondary" onclick="openModal('schedule-live-modal')">📅 جدولة بث</button>
             <button class="btn-meet secondary" onclick="document.getElementById('rec-panel').scrollIntoView({behavior:'smooth'})">⏺️ تسجيل فقط</button>
           </div>
+        </div>
+
+        <!-- Live join banner for employees -->
+        <div class="live-join-banner" id="live-join-banner">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="live-badge" style="background:rgba(255,255,255,0.2);"><span class="rec-dot" style="background:white;"></span> مباشر الآن</span>
+            <div>
+              <div style="font-weight:700;font-size:15px;" id="live-join-title">بث مباشر جارٍ</div>
+              <div style="font-size:12px;opacity:0.85;" id="live-join-by">اضغط للانضمام ومشاهدة الشرح</div>
+            </div>
+          </div>
+          <button class="btn-meet primary" style="background:white;color:#C0392B;" onclick="joinLiveBroadcast()">🔴 انضم للبث المباشر</button>
         </div>
 
         <!-- Online employees + Chat -->
@@ -1214,7 +1267,7 @@
             <button class="btn-secondary" id="btn-cancel-rec" onclick="cancelTrainingRecord()" style="display:none;">إلغاء</button>
           </div>
           <p style="font-size:11px;color:var(--gray-500);margin-top:12px;text-align:center;">
-            💡 البث المباشر يسجّل الشاشة أثناء الشرح، وعند الإيقاف يُحفظ تلقائياً كملف فيديو في المنصة. يتطلب HTTPS أو localhost.
+            💡 البث المباشر: الموظفون يرون شاشتك لحظياً (WebRTC) + يُحفظ التسجيل كفيديو عند الإيقاف. يتطلب HTTPS أو localhost. حد مناسب لفرق صغيرة.
           </p>
         </div>
 
@@ -1236,6 +1289,35 @@
     </footer>
   </div><!-- end main-content -->
 </div><!-- end app -->
+
+
+<!-- LIVE VIEWER MODAL (employees watch host stream) -->
+<div class="modal-overlay" id="live-viewer-overlay">
+  <div class="live-viewer-modal">
+    <div class="video-header">
+      <h3 id="live-viewer-room-name">🔴 بث مباشر</h3>
+      <span class="live-badge"><span class="rec-dot" style="background:white;"></span> LIVE</span>
+      <button class="close-modal-btn" onclick="leaveLiveBroadcast()">✕</button>
+    </div>
+    <div class="live-viewer-video-wrap">
+      <video id="live-viewer-video" autoplay playsinline></video>
+      <div class="live-viewer-placeholder" id="live-viewer-placeholder">
+        <div style="font-size:48px;">📡</div>
+        <div>جاري الاتصال بالبث...</div>
+        <div style="font-size:12px;opacity:0.7;">تأكد أن المدير بدأ مشاركة الشاشة</div>
+      </div>
+    </div>
+    <div class="live-viewer-footer">
+      <div class="info">
+        <span id="live-viewer-status">⏳ الاتصال...</span>
+        <span class="live-viewers-count" id="live-viewers-count" style="margin-right:10px;">0 مشاهد</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secondary" style="padding:8px 14px;" onclick="leaveLiveBroadcast()">مغادرة البث</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- VIDEO CALL MODAL -->
 <div class="modal-overlay" id="video-modal-overlay">
@@ -1463,6 +1545,16 @@ let LIVE_SESSIONS = [];
 let trainingChatMessages = [];
 let trainingChatChannel = null;
 let trainingChatPollTimer = null;
+
+// WebRTC live broadcast (host → employees)
+let liveHostPeers = {}; // username -> RTCPeerConnection (host side)
+let liveViewerPc = null; // viewer peer connection
+let liveIsViewer = false;
+let liveHostUsername = null;
+let liveHostName = null;
+let liveCurrentTitle = '';
+let liveViewerCount = 0;
+const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
 // ============ HELPERS ============
 function showToast(msg, type = 'success') {
@@ -1821,10 +1913,15 @@ async function startTrainingRecord(asLive) {
       await saveTrainingRecording(title);
       if (isLiveTraining) {
         await endLiveSessionMark();
+        closeAllLivePeers();
         broadcastTrainingEvent('live_ended', { title });
         pushTrainingSystemMessage('📴 انتهى البث المباشر: ' + title + ' — تم حفظ الفيديو في المنصة');
+        hideLiveJoinBanner();
+        if (liveIsViewer) leaveLiveBroadcast();
       }
       isLiveTraining = false;
+      liveHostUsername = null;
+      liveCurrentTitle = '';
     };
 
     const preview = document.getElementById('rec-preview');
@@ -1866,9 +1963,21 @@ async function startTrainingRecord(asLive) {
     if (isLiveTraining) {
       setLiveIndicator(true, title);
       await markLiveSessionActive(title);
-      broadcastTrainingEvent('live_started', { title, by: currentUser ? currentUser.name : '' });
-      pushTrainingSystemMessage('🔴 بدأ بث مباشر: ' + title + (currentUser ? ' — بواسطة ' + currentUser.name : ''));
-      showToast('📡 البث المباشر يعمل — سيتم حفظ الفيديو عند الإيقاف');
+      liveHostUsername = currentUser ? currentUser.username : 'host';
+      liveHostName = currentUser ? currentUser.name : 'المدرب';
+      liveCurrentTitle = title;
+      liveViewerCount = 0;
+      closeAllLivePeers();
+      broadcastTrainingEvent('live_started', {
+        title,
+        by: liveHostName,
+        hostUsername: liveHostUsername,
+        sessionId: currentLiveSessionId
+      });
+      pushTrainingSystemMessage('🔴 بدأ بث مباشر: ' + title + (currentUser ? ' — بواسطة ' + currentUser.name : '') + ' — يمكن للموظفين الانضمام الآن');
+      showToast('📡 البث المباشر يعمل — الموظفون يمكنهم الانضمام من زر «انضم للبث»');
+      showLiveJoinBanner(false); // host doesn't need join banner
+      updateLiveViewerCountUI();
     } else {
       showToast('⏺️ بدأ التسجيل — جودة مضغوطة');
     }
@@ -1914,9 +2023,13 @@ function cancelTrainingRecord() {
   trainingRecordedBlob = null;
   if (isLiveTraining) {
     endLiveSessionMark();
+    closeAllLivePeers();
     broadcastTrainingEvent('live_ended', { title: 'cancelled' });
+    hideLiveJoinBanner();
   }
   isLiveTraining = false;
+  liveHostUsername = null;
+  liveCurrentTitle = '';
   setLiveIndicator(false);
   const btnStart = document.getElementById('btn-start-rec');
   const btnLive = document.getElementById('btn-start-live');
@@ -2133,6 +2246,41 @@ function setLiveIndicator(on, title) {
   if (tEl) tEl.textContent = title || '';
 }
 
+function showLiveJoinBanner(show, title, by) {
+  const banner = document.getElementById('live-join-banner');
+  if (!banner) return;
+  // Host who is broadcasting should not see join banner
+  if (isLiveTraining && trainingStream) {
+    banner.classList.remove('show');
+    return;
+  }
+  if (show) {
+    banner.classList.add('show');
+    const t = document.getElementById('live-join-title');
+    const b = document.getElementById('live-join-by');
+    if (t) t.textContent = title || liveCurrentTitle || 'بث مباشر جارٍ';
+    if (b) b.textContent = (by || liveHostName) ? ('بواسطة: ' + (by || liveHostName) + ' — اضغط للانضمام ومشاهدة الشرح') : 'اضغط للانضمام ومشاهدة الشرح';
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+function hideLiveJoinBanner() {
+  const banner = document.getElementById('live-join-banner');
+  if (banner) banner.classList.remove('show');
+}
+
+function updateLiveViewerCountUI() {
+  const el = document.getElementById('live-viewers-count');
+  if (el) el.textContent = liveViewerCount + ' مشاهد';
+  // also show count near host status if recording
+  const status = document.getElementById('rec-status');
+  if (status && isLiveTraining) {
+    const base = '<span class="rec-dot"></span> <strong style="color:var(--red)">بث مباشر + تسجيل</strong> — اشرح ثم اضغط إنهاء لحفظ الفيديو';
+    status.innerHTML = base + ' <span style="color:var(--gold);margin-right:8px;">👥 ' + liveViewerCount + ' مشاهد</span>';
+  }
+}
+
 function startLiveTrainingNow() {
   const titleInp = document.getElementById('training-title');
   if (titleInp && !titleInp.value.trim()) {
@@ -2216,11 +2364,28 @@ async function loadLiveSessions() {
         <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${s.description || ''}</div>
         <div style="font-size:11px;color:var(--gray-500);margin-bottom:12px;">⏰ ${when} · 👤 ${s.created_by_name || s.created_by || '—'}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          ${!isDone && currentUser ? `<button class="btn-sm gold" onclick="startScheduledLive('${String(s.id).replace(/'/g,"\\'")}')">📡 بدء البث</button>` : ''}
+          ${isLive ? `<button class="btn-sm gold" style="background:linear-gradient(135deg,#E74C3C,#C0392B);color:white;" onclick="joinLiveBroadcast()">🔴 انضم للبث</button>` : ''}
+          ${!isDone && !isLive && currentUser && currentUser.isAdmin ? `<button class="btn-sm gold" onclick="startScheduledLive('${String(s.id).replace(/'/g,"\\'")}')">📡 بدء البث</button>` : ''}
           ${currentUser && currentUser.isAdmin ? `<button class="btn-sm outline" onclick="deleteLiveSession('${String(s.id).replace(/'/g,"\\'")}')">🗑️</button>` : ''}
         </div>
       </div>`;
   }).join('');
+
+  // If any session is live and we're not the host, show join banner
+  const anyLive = LIVE_SESSIONS.find(s => s.status === 'live');
+  if (anyLive) {
+    const amHost = isLiveTraining && trainingStream;
+    if (!amHost) {
+      liveCurrentTitle = anyLive.title || '';
+      liveHostName = anyLive.created_by_name || anyLive.created_by || '';
+      liveHostUsername = anyLive.created_by || liveHostUsername;
+      setLiveIndicator(true, anyLive.title);
+      showLiveJoinBanner(true, anyLive.title, liveHostName);
+    }
+  } else if (!isLiveTraining) {
+    setLiveIndicator(false);
+    hideLiveJoinBanner();
+  }
 }
 
 function startScheduledLive(id) {
@@ -2301,15 +2466,33 @@ function startTrainingChat() {
         if (!payload) return;
         if (payload.type === 'live_started') {
           setLiveIndicator(true, payload.title || '');
-          showToast('🔴 بث مباشر بدأ: ' + (payload.title || ''));
+          liveHostUsername = payload.hostUsername || null;
+          liveHostName = payload.by || payload.hostUsername || '';
+          liveCurrentTitle = payload.title || '';
+          showToast('🔴 بث مباشر بدأ: ' + (payload.title || '') + ' — يمكنك الانضمام الآن');
+          // Show join banner for non-host employees
+          const amHost = currentUser && payload.hostUsername && currentUser.username === payload.hostUsername;
+          if (!amHost) showLiveJoinBanner(true, payload.title, payload.by);
+          else showLiveJoinBanner(false);
           loadLiveSessions();
         }
         if (payload.type === 'live_ended') {
           setLiveIndicator(false);
+          hideLiveJoinBanner();
           showToast('📴 انتهى البث — الفيديو محفوظ في المنصة');
+          if (liveIsViewer) leaveLiveBroadcast();
+          closeAllLivePeers();
+          liveHostUsername = null;
+          liveCurrentTitle = '';
           loadLiveSessions();
           loadTrainings();
         }
+        if (payload.type === 'viewer_count') {
+          liveViewerCount = payload.count || 0;
+          updateLiveViewerCountUI();
+        }
+        // WebRTC signaling
+        handleLiveSignaling(payload);
       })
       .subscribe();
   } catch (e) {
@@ -2318,6 +2501,283 @@ function startTrainingChat() {
   // poll DB messages if table exists
   trainingChatPollTimer = setInterval(loadTrainingChat, 15000);
 }
+
+
+// ============ WEBRTC LIVE BROADCAST (host shares screen → employees watch) ============
+function closeAllLivePeers() {
+  Object.keys(liveHostPeers).forEach(u => {
+    try { liveHostPeers[u].close(); } catch (_) {}
+  });
+  liveHostPeers = {};
+  liveViewerCount = 0;
+  updateLiveViewerCountUI();
+  if (liveViewerPc) {
+    try { liveViewerPc.close(); } catch (_) {}
+    liveViewerPc = null;
+  }
+}
+
+function broadcastLiveSignal(payload) {
+  try {
+    if (trainingChatChannel) {
+      trainingChatChannel.send({
+        type: 'broadcast',
+        event: 'event',
+        payload
+      });
+    }
+  } catch (e) { console.warn('signal', e); }
+}
+
+async function handleLiveSignaling(payload) {
+  if (!payload || !payload.type) return;
+  const me = currentUser ? currentUser.username : null;
+
+  // ---- Host receives join request from a viewer ----
+  if (payload.type === 'join_request' && isLiveTraining && trainingStream) {
+    // Only host handles this
+    if (liveHostUsername && me && me !== liveHostUsername) return;
+    const viewerUser = payload.fromUsername;
+    const viewerName = payload.fromName || viewerUser;
+    if (!viewerUser) return;
+    try {
+      // close existing peer for same user if any
+      if (liveHostPeers[viewerUser]) {
+        try { liveHostPeers[viewerUser].close(); } catch (_) {}
+        delete liveHostPeers[viewerUser];
+      }
+      const pc = new RTCPeerConnection(ICE_SERVERS);
+      liveHostPeers[viewerUser] = pc;
+      trainingStream.getTracks().forEach(track => {
+        try { pc.addTrack(track, trainingStream); } catch (e) { console.warn(e); }
+      });
+      pc.onicecandidate = (ev) => {
+        if (ev.candidate) {
+          broadcastLiveSignal({
+            type: 'webrtc_ice',
+            role: 'host',
+            to: viewerUser,
+            from: liveHostUsername,
+            candidate: ev.candidate
+          });
+        }
+      };
+      pc.onconnectionstatechange = () => {
+        const st = pc.connectionState;
+        if (st === 'connected') {
+          liveViewerCount = Object.keys(liveHostPeers).filter(u => {
+            const p = liveHostPeers[u];
+            return p && (p.connectionState === 'connected' || p.connectionState === 'connecting');
+          }).length;
+          updateLiveViewerCountUI();
+          broadcastLiveSignal({ type: 'viewer_count', count: liveViewerCount });
+          pushTrainingSystemMessage('👤 انضم للبث: ' + viewerName);
+        }
+        if (st === 'failed' || st === 'closed' || st === 'disconnected') {
+          try { pc.close(); } catch (_) {}
+          delete liveHostPeers[viewerUser];
+          liveViewerCount = Object.keys(liveHostPeers).length;
+          updateLiveViewerCountUI();
+          broadcastLiveSignal({ type: 'viewer_count', count: liveViewerCount });
+        }
+      };
+      const offer = await pc.createOffer({ offerToReceiveAudio: false, offerToReceiveVideo: false });
+      await pc.setLocalDescription(offer);
+      broadcastLiveSignal({
+        type: 'webrtc_offer',
+        to: viewerUser,
+        from: liveHostUsername,
+        fromName: liveHostName,
+        title: liveCurrentTitle,
+        sdp: pc.localDescription
+      });
+    } catch (e) {
+      console.error('host offer', e);
+      showToast('⚠️ تعذر إنشاء اتصال مع مشاهد', 'error');
+    }
+    return;
+  }
+
+  // ---- Viewer receives offer from host ----
+  if (payload.type === 'webrtc_offer' && liveIsViewer) {
+    if (payload.to && me && payload.to !== me) return;
+    try {
+      if (!liveViewerPc) {
+        liveViewerPc = new RTCPeerConnection(ICE_SERVERS);
+        liveViewerPc.ontrack = (ev) => {
+          const video = document.getElementById('live-viewer-video');
+          const ph = document.getElementById('live-viewer-placeholder');
+          if (video) {
+            if (ev.streams && ev.streams[0]) video.srcObject = ev.streams[0];
+            else {
+              const ms = new MediaStream([ev.track]);
+              video.srcObject = ms;
+            }
+            video.play().catch(() => {});
+          }
+          if (ph) ph.style.display = 'none';
+          const st = document.getElementById('live-viewer-status');
+          if (st) st.textContent = '✅ متصل بالبث المباشر';
+          showToast('✅ تم الاتصال بالبث');
+        };
+        liveViewerPc.onicecandidate = (ev) => {
+          if (ev.candidate) {
+            broadcastLiveSignal({
+              type: 'webrtc_ice',
+              role: 'viewer',
+              to: payload.from || liveHostUsername,
+              from: me,
+              candidate: ev.candidate
+            });
+          }
+        };
+        liveViewerPc.onconnectionstatechange = () => {
+          const stEl = document.getElementById('live-viewer-status');
+          const st = liveViewerPc ? liveViewerPc.connectionState : '';
+          if (stEl) {
+            if (st === 'connected') stEl.textContent = '✅ متصل بالبث المباشر';
+            else if (st === 'connecting') stEl.textContent = '⏳ جاري الاتصال...';
+            else if (st === 'failed') stEl.textContent = '❌ فشل الاتصال — أعد الانضمام';
+            else if (st === 'disconnected') stEl.textContent = '⚠️ انقطع الاتصال';
+          }
+        };
+      }
+      await liveViewerPc.setRemoteDescription(payload.sdp);
+      const answer = await liveViewerPc.createAnswer();
+      await liveViewerPc.setLocalDescription(answer);
+      broadcastLiveSignal({
+        type: 'webrtc_answer',
+        to: payload.from || liveHostUsername,
+        from: me,
+        sdp: liveViewerPc.localDescription
+      });
+    } catch (e) {
+      console.error('viewer offer', e);
+      const st = document.getElementById('live-viewer-status');
+      if (st) st.textContent = '❌ خطأ في الاتصال';
+      showToast('⚠️ تعذر الاتصال بالبث', 'error');
+    }
+    return;
+  }
+
+  // ---- Host receives answer from viewer ----
+  if (payload.type === 'webrtc_answer' && isLiveTraining) {
+    if (payload.to && me && payload.to !== me && liveHostUsername !== me) return;
+    const viewerUser = payload.from;
+    const pc = liveHostPeers[viewerUser];
+    if (!pc) return;
+    try {
+      await pc.setRemoteDescription(payload.sdp);
+    } catch (e) { console.warn('host answer', e); }
+    return;
+  }
+
+  // ---- ICE candidates both ways ----
+  if (payload.type === 'webrtc_ice') {
+    if (payload.to && me && payload.to !== me) return;
+    try {
+      if (payload.role === 'host' && liveIsViewer && liveViewerPc) {
+        await liveViewerPc.addIceCandidate(payload.candidate);
+      } else if (payload.role === 'viewer' && isLiveTraining) {
+        const pc = liveHostPeers[payload.from];
+        if (pc) await pc.addIceCandidate(payload.candidate);
+      }
+    } catch (e) { console.warn('ice', e); }
+    return;
+  }
+
+  // Viewer left
+  if (payload.type === 'viewer_left' && isLiveTraining) {
+    const u = payload.fromUsername;
+    if (u && liveHostPeers[u]) {
+      try { liveHostPeers[u].close(); } catch (_) {}
+      delete liveHostPeers[u];
+      liveViewerCount = Object.keys(liveHostPeers).length;
+      updateLiveViewerCountUI();
+      broadcastLiveSignal({ type: 'viewer_count', count: liveViewerCount });
+    }
+  }
+}
+
+async function joinLiveBroadcast() {
+  if (!currentUser) {
+    showToast('❌ يجب تسجيل الدخول أولاً', 'error');
+    return;
+  }
+  // Host already broadcasting — don't join own stream
+  if (isLiveTraining && trainingStream) {
+    showToast('أنت بالفعل تبث الآن', 'error');
+    return;
+  }
+  if (!window.RTCPeerConnection) {
+    showToast('❌ المتصفح لا يدعم WebRTC', 'error');
+    return;
+  }
+
+  liveIsViewer = true;
+  const overlay = document.getElementById('live-viewer-overlay');
+  if (overlay) overlay.classList.add('active');
+  document.body.classList.add('modal-open');
+
+  const nameEl = document.getElementById('live-viewer-room-name');
+  if (nameEl) nameEl.textContent = '🔴 ' + (liveCurrentTitle || 'بث مباشر');
+  const ph = document.getElementById('live-viewer-placeholder');
+  if (ph) {
+    ph.style.display = 'flex';
+    ph.innerHTML = '<div style="font-size:48px;">📡</div><div>جاري الاتصال بالبث...</div><div style="font-size:12px;opacity:0.7;">تأكد أن المدير بدأ مشاركة الشاشة</div>';
+  }
+  const video = document.getElementById('live-viewer-video');
+  if (video) video.srcObject = null;
+  const st = document.getElementById('live-viewer-status');
+  if (st) st.textContent = '⏳ طلب الانضمام...';
+
+  // Reset previous pc
+  if (liveViewerPc) {
+    try { liveViewerPc.close(); } catch (_) {}
+    liveViewerPc = null;
+  }
+
+  broadcastLiveSignal({
+    type: 'join_request',
+    fromUsername: currentUser.username,
+    fromName: currentUser.name,
+    ts: Date.now()
+  });
+
+  // Retry join request a couple times in case host channel wasn't ready
+  setTimeout(() => {
+    if (liveIsViewer && (!liveViewerPc || liveViewerPc.connectionState === 'new')) {
+      broadcastLiveSignal({
+        type: 'join_request',
+        fromUsername: currentUser.username,
+        fromName: currentUser.name,
+        ts: Date.now()
+      });
+    }
+  }, 2500);
+}
+
+function leaveLiveBroadcast() {
+  if (currentUser && liveIsViewer) {
+    broadcastLiveSignal({
+      type: 'viewer_left',
+      fromUsername: currentUser.username,
+      fromName: currentUser.name
+    });
+  }
+  liveIsViewer = false;
+  if (liveViewerPc) {
+    try { liveViewerPc.close(); } catch (_) {}
+    liveViewerPc = null;
+  }
+  const video = document.getElementById('live-viewer-video');
+  if (video) video.srcObject = null;
+  const overlay = document.getElementById('live-viewer-overlay');
+  if (overlay) overlay.classList.remove('active');
+  document.body.classList.remove('modal-open');
+  showToast('غادرت البث المباشر');
+}
+
 
 function stopTrainingChat() {
   if (trainingChatChannel) {
