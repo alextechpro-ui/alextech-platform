@@ -206,7 +206,8 @@
   #page-meetings.active,
   #page-reports.active,
   #page-settings.active,
-  #page-training.active {
+  #page-training.active,
+  #page-salaries.active {
     display: block !important;
   }
   #page-dashboard,
@@ -217,9 +218,20 @@
   #page-meetings,
   #page-reports,
   #page-settings,
-  #page-training {
+  #page-training,
+  #page-salaries {
     display: none !important;
   }
+  .perm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; }
+  .perm-item { display:flex; align-items:center; gap:8px; font-size:13px; padding:8px 10px; background:var(--gray-100); border-radius:8px; }
+  .perm-item input { width:16px; height:16px; accent-color:var(--gold); }
+  .salary-card { background:var(--white); border-radius:16px; padding:22px; border:1px solid var(--gray-200); }
+  .salary-amount { font-size:26px; font-weight:900; color:var(--navy); }
+  .bonus-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--gray-100); flex-wrap:wrap; }
+  .admin-only-train { display:none; }
+  body.is-admin .admin-only-train { display:flex !important; }
+  body.is-admin .admin-only-block { display:block !important; }
+  .admin-only-block { display:none; }
 
   /* Training platform */
   .training-hero {
@@ -898,12 +910,13 @@
       <div class="nav-item" onclick="showPage('tasks',this)"><span class="icon"><i class="fas fa-tasks"></i></span> المهام <span class="nav-badge" id="tasks-badge">5</span></div>
       <div class="nav-item" onclick="showPage('files',this)"><span class="icon"><i class="fas fa-folder-open"></i></span> الملفات</div>
       <div class="nav-item" onclick="showPage('meetings',this)"><span class="icon">📹</span> الاجتماعات</div>
-      <div class="nav-item" onclick="showPage('training',this)"><span class="icon">🎓</span> منصة التدريب</div>
+      <div class="nav-item" id="nav-training" data-perm="training" onclick="showPage('training',this)"><span class="icon">🎓</span> منصة التدريب</div>
+      <div class="nav-item" id="nav-salaries" data-perm="salaries" onclick="showPage('salaries',this)"><span class="icon">💰</span> المرتبات والمكافآت</div>
       <div class="nav-section-title" id="admin-nav-title" style="display:none">الإدارة</div>
-      <div class="nav-item" id="nav-employees" onclick="showPage('employees',this)" style="display:none"><span class="icon"><i class="fas fa-users"></i></span> الموظفون</div>
-      <div class="nav-item" id="nav-reports" onclick="showPage('reports',this)" style="display:none"><span class="icon"><i class="fas fa-chart-bar"></i></span> التقارير</div>
+      <div class="nav-item" id="nav-employees" data-perm="employees" onclick="showPage('employees',this)" style="display:none"><span class="icon"><i class="fas fa-users"></i></span> الموظفون</div>
+      <div class="nav-item" id="nav-reports" data-perm="reports" onclick="showPage('reports',this)" style="display:none"><span class="icon"><i class="fas fa-chart-bar"></i></span> التقارير</div>
       <div class="nav-section-title" id="admin-nav-title2" style="display:none">النظام</div>
-      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)" style="display:none"><span class="icon"><i class="fas fa-cog"></i></span> إعدادات المنصة</div>
+      <div class="nav-item" id="nav-settings" data-perm="settings" onclick="showPage('settings',this)" style="display:none"><span class="icon"><i class="fas fa-cog"></i></span> إعدادات المنصة</div>
     </div>
     <div class="sidebar-footer">
       <button class="btn-logout" onclick="doLogout()">🚪 تسجيل الخروج</button>
@@ -1082,6 +1095,39 @@
       </div>
 
       <!-- SETTINGS PAGE -->
+      <!-- SALARIES & BONUSES -->
+      <div class="page" id="page-salaries">
+        <div class="card-header-flex">
+          <h2>💰 المرتبات والمكافآت</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary admin-only-block" style="display:none" onclick="openModal('add-bonus-modal')">➕ إضافة مكافأة</button>
+            <button class="btn-secondary admin-only-block" style="display:none" onclick="openModal('edit-salary-modal')">✏️ تعديل مرتب</button>
+          </div>
+        </div>
+        <div class="alert info" id="salaries-hint">الموظف يرى مرتبه ومكافآته فقط. المدير يدير الجميع.</div>
+        <div id="my-salary-panel" style="margin-bottom:20px;"></div>
+        <div class="admin-only-block" id="all-salaries-panel" style="display:none;">
+          <h3 style="margin-bottom:15px;font-size:16px;">جدول المرتبات</h3>
+          <div style="overflow-x:auto;background:white;border-radius:14px;border:1px solid var(--gray-200);">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>الموظف</th>
+                  <th>القسم</th>
+                  <th>المرتب الأساسي</th>
+                  <th>إجمالي المكافآت</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="salaries-table-body"></tbody>
+            </table>
+          </div>
+          <h3 style="margin:25px 0 15px;font-size:16px;">سجل المكافآت</h3>
+          <div id="bonuses-list" class="dash-card"></div>
+        </div>
+        <div id="emp-bonuses-panel" class="dash-card" style="margin-top:15px;"></div>
+      </div>
+
       <div class="page" id="page-settings">
         <div class="card-header-flex"><h2>⚙️ إعدادات المنصة</h2></div>
 
@@ -1097,7 +1143,7 @@
                 <button class="btn-sm" style="background:var(--red); color:white;" onclick="confirmDeleteAllEmployees()">🗑️ حذف الكل</button>
               </div>
             </div>
-            <div id="settings-employees-list"></div>
+            <p style="font-size:12px;color:var(--gray-500);margin-bottom:10px;">لتعديل صلاحيات كل موظف: من صفحة المرتبات أو بطاقة الموظف ← 🔐 صلاحيات</p><div id="settings-employees-list"></div>
           </div>
 
           <!-- Tasks Management -->
@@ -1174,10 +1220,13 @@
               <span id="live-indicator-title" style="margin-right:10px;font-size:13px;opacity:0.9;"></span>
             </div>
           </div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <div class="admin-only-train" style="gap:10px; flex-wrap:wrap;">
             <button class="btn-meet primary" onclick="startLiveTrainingNow()">📡 بدء بث مباشر</button>
             <button class="btn-meet secondary" onclick="openModal('schedule-live-modal')">📅 جدولة بث</button>
             <button class="btn-meet secondary" onclick="document.getElementById('rec-panel').scrollIntoView({behavior:'smooth'})">⏺️ تسجيل فقط</button>
+          </div>
+          <div id="emp-training-hint" style="display:none;font-size:13px;color:rgba(255,255,255,0.75);max-width:320px;">
+            يمكنك مشاهدة التدريبات المحفوظة، الانضمام للبث المباشر، والدردشة مع الفريق.
           </div>
         </div>
 
@@ -1401,6 +1450,22 @@
     <div class="input-group"><label>الإدارة</label>
       <select id="new-emp-dept"><option>المحاسبة</option><option>تقنية المعلومات</option><option>الموارد البشرية</option><option>المبيعات</option><option>العمليات</option></select>
     </div>
+    <div class="input-group"><label>المرتب الأساسي (ج.م)</label><input type="number" id="new-emp-salary" placeholder="مثال: 8000" min="0" step="100"></div>
+    <div class="input-group"><label>صلاحيات الموظف</label>
+      <div class="perm-grid" id="new-emp-perms">
+        <label class="perm-item"><input type="checkbox" data-p="dashboard" checked> لوحة التحكم</label>
+        <label class="perm-item"><input type="checkbox" data-p="tasks" checked> المهام</label>
+        <label class="perm-item"><input type="checkbox" data-p="files" checked> الملفات</label>
+        <label class="perm-item"><input type="checkbox" data-p="meetings" checked> الاجتماعات</label>
+        <label class="perm-item"><input type="checkbox" data-p="training" checked> منصة التدريب</label>
+        <label class="perm-item"><input type="checkbox" data-p="salaries" checked> المرتبات (الخاصة به)</label>
+        <label class="perm-item"><input type="checkbox" data-p="employees"> الموظفون</label>
+        <label class="perm-item"><input type="checkbox" data-p="reports"> التقارير</label>
+        <label class="perm-item"><input type="checkbox" data-p="settings"> الإعدادات</label>
+        <label class="perm-item"><input type="checkbox" data-p="train_manage"> إدارة التدريب/البث</label>
+      </div>
+      <p style="font-size:11px;color:var(--gray-500);margin-top:6px;">افتراضياً: الموظف يرى مهامه وملفاته وتدريبه ومرتبه فقط — بدون إدارة المنصة.</p>
+    </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('add-emp-modal')">إلغاء</button>
       <button class="btn-primary" onclick="addEmployee()">✅ إضافة الموظف</button>
@@ -1411,6 +1476,50 @@
 
 
 <!-- MEETING MODE MODAL -->
+
+<div class="modal-overlay" id="add-bonus-modal">
+  <div class="modal">
+    <h3>🎁 إضافة مكافأة</h3>
+    <div class="input-group"><label>الموظف *</label>
+      <select id="bonus-emp"></select>
+    </div>
+    <div class="input-group"><label>المبلغ (ج.م) *</label><input type="number" id="bonus-amount" min="1" step="50" placeholder="500"></div>
+    <div class="input-group"><label>السبب / الوصف</label><input type="text" id="bonus-reason" placeholder="مكافأة أداء — إنجاز مشروع..."></div>
+    <div class="input-group"><label>التاريخ</label><input type="date" id="bonus-date"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('add-bonus-modal')">إلغاء</button>
+      <button class="btn-primary" onclick="submitBonus()">✅ حفظ المكافأة</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="edit-salary-modal">
+  <div class="modal">
+    <h3>✏️ تعديل المرتب الأساسي</h3>
+    <div class="input-group"><label>الموظف *</label>
+      <select id="salary-emp" onchange="fillSalaryField()"></select>
+    </div>
+    <div class="input-group"><label>المرتب الأساسي (ج.م) *</label><input type="number" id="salary-amount" min="0" step="100"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('edit-salary-modal')">إلغاء</button>
+      <button class="btn-primary" onclick="submitSalary()">✅ حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="edit-perms-modal">
+  <div class="modal" style="max-width:560px">
+    <h3>🔐 صلاحيات الموظف</h3>
+    <p id="edit-perms-name" style="color:var(--gray-500);font-size:13px;margin-bottom:12px;"></p>
+    <input type="hidden" id="edit-perms-user">
+    <div class="perm-grid" id="edit-perms-grid"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('edit-perms-modal')">إلغاء</button>
+      <button class="btn-primary" onclick="saveEmployeePerms()">✅ حفظ الصلاحيات</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="meeting-mode-modal">
   <div class="modal">
     <h3>🎥 اختر نوع الاجتماع</h3>
@@ -1519,7 +1628,40 @@ let TASKS = [];
 let MEETINGS = [];
 let FILES = [];
 let TRAININGS = [];
+let BONUSES = [];
 let currentTaskFilter = 'all';
+const DEFAULT_EMP_PERMS = {
+  dashboard: true, tasks: true, files: true, meetings: true, training: true, salaries: true,
+  employees: false, reports: false, settings: false, train_manage: false
+};
+const ALL_PERMS = {
+  dashboard: true, tasks: true, files: true, meetings: true, training: true, salaries: true,
+  employees: true, reports: true, settings: true, train_manage: true
+};
+const PERM_LABELS = {
+  dashboard: 'لوحة التحكم', tasks: 'المهام', files: 'الملفات', meetings: 'الاجتماعات',
+  training: 'منصة التدريب', salaries: 'المرتبات والمكافآت', employees: 'الموظفون',
+  reports: 'التقارير', settings: 'إعدادات المنصة', train_manage: 'إدارة التدريب والبث'
+};
+function getUserPerms(user) {
+  if (!user) return { ...DEFAULT_EMP_PERMS };
+  if (user.isAdmin || user.username === 'admin') return { ...ALL_PERMS };
+  return { ...DEFAULT_EMP_PERMS, ...(user.permissions || {}) };
+}
+function can(perm) {
+  if (!currentUser) return false;
+  return !!getUserPerms(currentUser)[perm];
+}
+function loadBonusesLocal() {
+  try { BONUSES = JSON.parse(localStorage.getItem('alextech_bonuses') || '[]'); if (!Array.isArray(BONUSES)) BONUSES = []; }
+  catch (_) { BONUSES = []; }
+}
+function saveBonusesLocal() { localStorage.setItem('alextech_bonuses', JSON.stringify(BONUSES)); }
+function loadPermsMap() {
+  try { return JSON.parse(localStorage.getItem('alextech_perms') || '{}'); } catch (_) { return {}; }
+}
+function savePermsMap(map) { localStorage.setItem('alextech_perms', JSON.stringify(map || {})); }
+
 let callTimer = null;
 let callSeconds = 0;
 let localStream = null;
@@ -1583,20 +1725,45 @@ async function loadFromSupabase() {
     // Employees
     const { data: empData, error: empErr } = await sb.from('employees').select('*').order('id', { ascending: true });
     if (empErr) throw empErr;
-    EMPLOYEES = (empData || []).map(x => ({
-      id: x.id,
-      name: x.name || '',
-      role: x.position || '',
-      dept: x.department || '',
-      email: x.email || '',
-      phone: x.phone || '',
-      salary: x.salary || 0,
-      joinDate: x.hire_date || '',
-      user: x.username || '',
-      status: x.status || 'offline',
-      tasks: 0,
-      done: 0
-    }));
+    const permsMap = loadPermsMap();
+    loadBonusesLocal();
+    EMPLOYEES = (empData || []).map(x => {
+      const uname = x.username || '';
+      let perms = null;
+      if (x.permissions) {
+        try { perms = typeof x.permissions === 'string' ? JSON.parse(x.permissions) : x.permissions; } catch(_) {}
+      }
+      if (!perms && permsMap[uname]) perms = permsMap[uname];
+      return {
+        id: x.id,
+        name: x.name || '',
+        role: x.position || '',
+        dept: x.department || '',
+        email: x.email || '',
+        phone: x.phone || '',
+        salary: Number(x.salary) || 0,
+        joinDate: x.hire_date || '',
+        user: uname,
+        status: x.status || 'offline',
+        permissions: perms || (uname === 'admin' ? { ...ALL_PERMS } : { ...DEFAULT_EMP_PERMS }),
+        tasks: 0,
+        done: 0
+      };
+    });
+    try {
+      const { data: bdata } = await sb.from('bonuses').select('*').order('id', { ascending: false });
+      if (bdata && bdata.length) {
+        BONUSES = bdata.map(b => ({
+          id: b.id,
+          username: b.username || b.employee || '',
+          amount: Number(b.amount) || 0,
+          reason: b.reason || b.description || '',
+          date: b.date || (b.created_at ? String(b.created_at).split('T')[0] : ''),
+          created_by: b.created_by || ''
+        }));
+        saveBonusesLocal();
+      }
+    } catch (_) {}
 
     // Tasks
     const { data: taskData, error: taskErr } = await sb.from('tasks').select('*').order('id', { ascending: false });
@@ -1740,13 +1907,22 @@ async function doLogin() {
       return;
     }
 
+    const permsMap = loadPermsMap();
+    let perms = null;
+    if (data.permissions) {
+      try { perms = typeof data.permissions === 'string' ? JSON.parse(data.permissions) : data.permissions; } catch(_) {}
+    }
+    if (!perms && permsMap[data.username]) perms = permsMap[data.username];
+    const isAdmin = data.username === 'admin';
     currentUser = {
       username: data.username,
       name: data.name,
       role: data.position,
       dept: data.department,
-      isAdmin: data.username === 'admin',
-      email: data.email
+      isAdmin,
+      email: data.email,
+      salary: Number(data.salary) || 0,
+      permissions: isAdmin ? { ...ALL_PERMS } : { ...DEFAULT_EMP_PERMS, ...(perms || {}) }
     };
 
     localStorage.setItem('alextech_token', btoa(user + ':' + pass));
@@ -1793,6 +1969,7 @@ async function enterPlatform(platform) {
   showAdminNav(!!currentUser.isAdmin);
 
   await loadFromSupabase();
+  applyNavPermissions();
 
   if (currentPlatform === 'training') {
     showPage('training');
@@ -2176,7 +2353,7 @@ async function loadTrainings() {
       </div>
       <div style="display:flex;gap:8px">
         ${t.url ? `<button class="btn-sm gold" onclick="window.open('${t.url}','_blank')">▶️ مشاهدة</button>` : ''}
-        ${currentUser && currentUser.isAdmin ? `<button class="btn-sm outline" onclick="deleteTraining(${t.id})">🗑️</button>` : ''}
+        ${can('train_manage') ? `<button class="btn-sm outline" onclick="deleteTraining(${t.id})">🗑️</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -2282,6 +2459,8 @@ function updateLiveViewerCountUI() {
 }
 
 function startLiveTrainingNow() {
+  if (!can('train_manage')) { showToast('❌ ليس لديك صلاحية', 'error'); return; }
+
   const titleInp = document.getElementById('training-title');
   if (titleInp && !titleInp.value.trim()) {
     titleInp.value = 'بث مباشر — ' + new Date().toLocaleString('ar-EG');
@@ -2291,6 +2470,8 @@ function startLiveTrainingNow() {
 }
 
 async function scheduleLiveSession() {
+  if (!can('train_manage')) { showToast('❌ ليس لديك صلاحية', 'error'); return; }
+
   const title = (document.getElementById('live-title') || {}).value.trim();
   const desc = (document.getElementById('live-desc') || {}).value.trim() || '';
   const date = (document.getElementById('live-date') || {}).value;
@@ -2365,8 +2546,8 @@ async function loadLiveSessions() {
         <div style="font-size:11px;color:var(--gray-500);margin-bottom:12px;">⏰ ${when} · 👤 ${s.created_by_name || s.created_by || '—'}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           ${isLive ? `<button class="btn-sm gold" style="background:linear-gradient(135deg,#E74C3C,#C0392B);color:white;" onclick="joinLiveBroadcast()">🔴 انضم للبث</button>` : ''}
-          ${!isDone && !isLive && currentUser && currentUser.isAdmin ? `<button class="btn-sm gold" onclick="startScheduledLive('${String(s.id).replace(/'/g,"\\'")}')">📡 بدء البث</button>` : ''}
-          ${currentUser && currentUser.isAdmin ? `<button class="btn-sm outline" onclick="deleteLiveSession('${String(s.id).replace(/'/g,"\\'")}')">🗑️</button>` : ''}
+          ${!isDone && !isLive && can('train_manage') ? `<button class="btn-sm gold" onclick="startScheduledLive('${String(s.id).replace(/'/g,"\\'")}')">📡 بدء البث</button>` : ''}
+          ${can('train_manage') ? `<button class="btn-sm outline" onclick="deleteLiveSession('${String(s.id).replace(/'/g,"\\'")}')">🗑️</button>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -2389,6 +2570,8 @@ async function loadLiveSessions() {
 }
 
 function startScheduledLive(id) {
+  if (!can('train_manage')) { showToast('❌ ليس لديك صلاحية', 'error'); return; }
+
   const s = LIVE_SESSIONS.find(x => String(x.id) === String(id));
   if (!s) return;
   currentLiveSessionId = s.id;
@@ -2900,11 +3083,34 @@ async function loadTrainingChat() {
 // ============ PAGES ============
 
 function showAdminNav(isAdmin) {
-  const ids = ['nav-employees', 'nav-reports', 'nav-settings', 'admin-nav-title', 'admin-nav-title2'];
-  ids.forEach(id => {
+  applyNavPermissions();
+}
+function applyNavPermissions() {
+  const isAdmin = !!(currentUser && currentUser.isAdmin);
+  document.body.classList.toggle('is-admin', isAdmin);
+  ['admin-nav-title', 'admin-nav-title2'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isAdmin ? '' : 'none';
   });
+  const map = {
+    'nav-employees': 'employees', 'nav-reports': 'reports', 'nav-settings': 'settings',
+    'nav-salaries': 'salaries', 'nav-training': 'training'
+  };
+  Object.keys(map).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = can(map[id]) ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(n => {
+    const txt = (n.textContent || '');
+    if (txt.includes('لوحة التحكم')) n.style.display = can('dashboard') ? '' : 'none';
+    else if (txt.includes('المهام')) n.style.display = can('tasks') ? '' : 'none';
+    else if (txt.includes('الملفات')) n.style.display = can('files') ? '' : 'none';
+    else if (txt.includes('الاجتماعات')) n.style.display = can('meetings') ? '' : 'none';
+  });
+  const hint = document.getElementById('emp-training-hint');
+  if (hint) hint.style.display = (can('training') && !can('train_manage')) ? 'block' : 'none';
+  const rec = document.getElementById('rec-panel');
+  if (rec) rec.style.display = can('train_manage') ? '' : 'none';
 }
 
 function showPage(pageId, navEl) {
@@ -2917,6 +3123,20 @@ function showPage(pageId, navEl) {
   if (panel) panel.classList.remove('active');
   if (pageId === 'settings' && currentUser && currentUser.isAdmin) renderAdminSettings();
   if (pageId === 'training') initTrainingPlatform();
+  if (pageId === 'salaries') renderSalaries();
+  const pagePerm = {
+    dashboard: 'dashboard', tasks: 'tasks', files: 'files', meetings: 'meetings',
+    training: 'training', salaries: 'salaries', employees: 'employees',
+    reports: 'reports', settings: 'settings', 'emp-detail': 'employees'
+  };
+  if (pagePerm[pageId] && !can(pagePerm[pageId])) {
+    showToast('❌ ليس لديك صلاحية لهذه الصفحة', 'error');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const fallback = can('dashboard') ? 'dashboard' : (can('tasks') ? 'tasks' : (can('training') ? 'training' : 'files'));
+    const pg = document.getElementById('page-' + fallback);
+    if (pg) pg.classList.add('active');
+    return;
+  }
 }
 
 // ============ DASHBOARD ============
@@ -3246,6 +3466,7 @@ function renderEmployees() {
       </div>
       <div class="emp-card-actions">
         <button class="btn-sm gold" onclick="viewEmployee(${e.id})">عرض</button>
+        ${currentUser && currentUser.isAdmin ? `<button class="btn-sm outline" onclick="openEditPerms('${e.user}')">🔐 صلاحيات</button>` : ''}
         ${currentUser && currentUser.isAdmin ? `<button class="btn-sm outline" onclick="deleteEmployee(${e.id})">حذف</button>` : ''}
       </div>
     </div>`).join('') : '<p style="color:var(--gray-500);text-align:center;padding:30px;grid-column:1/-1">لا يوجد موظفين</p>';
@@ -3313,20 +3534,241 @@ async function addEmployee() {
   const position = document.getElementById('new-emp-role').value.trim() || '';
   const department = document.getElementById('new-emp-dept').value;
   const email = (document.getElementById('new-emp-email') || {}).value || '';
+  const salary = Number((document.getElementById('new-emp-salary') || {}).value) || 0;
+  const perms = { ...DEFAULT_EMP_PERMS };
+  document.querySelectorAll('#new-emp-perms input[data-p]').forEach(cb => {
+    perms[cb.dataset.p] = !!cb.checked;
+  });
 
-  const { error } = await sb.from('employees').insert([{
-    name, position, department, email, username: user, password: pass, status: 'offline'
-  }]);
+  const row = { name, position, department, email, username: user, password: pass, status: 'offline', salary };
+  let { error } = await sb.from('employees').insert([{ ...row, permissions: perms }]);
+  if (error && /permission/i.test(String(error.message || ''))) {
+    ({ error } = await sb.from('employees').insert([row]));
+  }
+  if (error && /salary/i.test(String(error.message || ''))) {
+    delete row.salary;
+    ({ error } = await sb.from('employees').insert([row]));
+  }
   if (error) {
     showToast('❌ ' + (error.message.includes('unique') ? 'اسم المستخدم موجود مسبقاً' : error.message), 'error');
     return;
   }
+  const map = loadPermsMap();
+  map[user] = perms;
+  savePermsMap(map);
+
   closeModal('add-emp-modal');
   document.getElementById('new-emp-name').value = '';
   document.getElementById('new-emp-user').value = '';
   document.getElementById('new-emp-pass').value = '';
-  showToast('✅ تم إضافة الموظف');
+  const sal = document.getElementById('new-emp-salary');
+  if (sal) sal.value = '';
+  showToast('✅ تم إضافة الموظف مع الصلاحيات');
   await loadFromSupabase();
+}
+
+function renderSalaries() {
+  const isAdmin = !!(currentUser && currentUser.isAdmin);
+  const hint = document.getElementById('salaries-hint');
+  if (hint) {
+    hint.textContent = isAdmin
+      ? 'أنت مدير: يمكنك تعديل المرتبات وإضافة مكافآت لكل الموظفين.'
+      : 'تعرض هذه الصفحة مرتبك الأساسي ومكافآتك فقط.';
+  }
+  const allPanel = document.getElementById('all-salaries-panel');
+  if (allPanel) allPanel.style.display = isAdmin ? 'block' : 'none';
+  document.querySelectorAll('#page-salaries .admin-only-block').forEach(el => {
+    el.style.display = isAdmin ? '' : 'none';
+  });
+
+  const myPanel = document.getElementById('my-salary-panel');
+  if (myPanel && currentUser) {
+    const me = EMPLOYEES.find(e => e.user === currentUser.username);
+    const sal = me ? Number(me.salary) || 0 : (Number(currentUser.salary) || 0);
+    const myBonuses = BONUSES.filter(b => b.username === currentUser.username);
+    const bonusSum = myBonuses.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+    myPanel.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon gold">💵</div><div class="stat-info"><h3>${sal.toLocaleString('ar-EG')}</h3><p>المرتب الأساسي (ج.م)</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">🎁</div><div class="stat-info"><h3>${bonusSum.toLocaleString('ar-EG')}</h3><p>إجمالي المكافآت</p></div></div>
+        <div class="stat-card"><div class="stat-icon navy">📊</div><div class="stat-info"><h3>${(sal + bonusSum).toLocaleString('ar-EG')}</h3><p>الإجمالي التقريبي</p></div></div>
+      </div>`;
+  }
+
+  const empB = document.getElementById('emp-bonuses-panel');
+  if (empB && currentUser && !isAdmin) {
+    const myBonuses = BONUSES.filter(b => b.username === currentUser.username);
+    empB.style.display = 'block';
+    empB.innerHTML = '<h3 style="margin-bottom:12px;font-size:15px;">🎁 مكافآتي</h3>' + (
+      myBonuses.length ? myBonuses.map(b => `
+        <div class="bonus-row">
+          <div><strong>${Number(b.amount).toLocaleString('ar-EG')} ج.م</strong><div style="font-size:12px;color:var(--gray-500)">${b.reason || '—'}</div></div>
+          <div style="font-size:12px;color:var(--gray-500)">${b.date || ''}</div>
+        </div>`).join('') : '<p style="color:var(--gray-500);text-align:center;padding:15px">لا توجد مكافآت مسجّلة</p>'
+    );
+  } else if (empB && isAdmin) {
+    empB.style.display = 'none';
+  }
+
+  if (!isAdmin) return;
+
+  const tbody = document.getElementById('salaries-table-body');
+  if (tbody) {
+    const list = EMPLOYEES.filter(e => e.user !== 'admin');
+    tbody.innerHTML = list.map(e => {
+      const bsum = BONUSES.filter(b => b.username === e.user).reduce((s, b) => s + (Number(b.amount) || 0), 0);
+      return `<tr>
+        <td><span class="table-avatar">${(e.name||'?')[0]}</span>${e.name}</td>
+        <td>${e.dept || '—'}</td>
+        <td><strong>${(Number(e.salary)||0).toLocaleString('ar-EG')}</strong> ج.م</td>
+        <td>${bsum.toLocaleString('ar-EG')} ج.م</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-sm gold" onclick="openEditSalaryFor('${e.user}')">مرتب</button>
+          <button class="btn-sm outline" onclick="openBonusFor('${e.user}')">مكافأة</button>
+          <button class="btn-sm outline" onclick="openEditPerms('${e.user}')">🔐 صلاحيات</button>
+        </td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--gray-500)">لا يوجد موظفون</td></tr>';
+  }
+
+  const blist = document.getElementById('bonuses-list');
+  if (blist) {
+    blist.innerHTML = BONUSES.length ? BONUSES.map(b => {
+      const emp = EMPLOYEES.find(e => e.user === b.username);
+      return `<div class="bonus-row">
+        <div>
+          <strong>${(emp && emp.name) || b.username}</strong>
+          <div style="font-size:12px;color:var(--gray-500)">${b.reason || '—'}</div>
+        </div>
+        <div style="text-align:left">
+          <div style="font-weight:700;color:var(--green)">${Number(b.amount).toLocaleString('ar-EG')} ج.م</div>
+          <div style="font-size:11px;color:var(--gray-500)">${b.date || ''}</div>
+        </div>
+        <button class="file-action-btn delete" onclick="deleteBonus('${b.id}')">حذف</button>
+      </div>`;
+    }).join('') : '<p style="color:var(--gray-500);text-align:center;padding:15px">لا توجد مكافآت</p>';
+  }
+
+  const opts = EMPLOYEES.filter(e => e.user !== 'admin').map(e => `<option value="${e.user}">${e.name}</option>`).join('');
+  ['bonus-emp', 'salary-emp'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.innerHTML = opts || '<option value="">—</option>';
+  });
+}
+
+function openEditSalaryFor(username) {
+  openModal('edit-salary-modal');
+  setTimeout(() => {
+    const sel = document.getElementById('salary-emp');
+    if (sel) { sel.value = username; fillSalaryField(); }
+  }, 50);
+}
+function openBonusFor(username) {
+  openModal('add-bonus-modal');
+  setTimeout(() => {
+    const sel = document.getElementById('bonus-emp');
+    if (sel) sel.value = username;
+    const d = document.getElementById('bonus-date');
+    if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+  }, 50);
+}
+function fillSalaryField() {
+  const u = (document.getElementById('salary-emp') || {}).value;
+  const e = EMPLOYEES.find(x => x.user === u);
+  const inp = document.getElementById('salary-amount');
+  if (inp) inp.value = e ? (e.salary || 0) : 0;
+}
+
+async function submitSalary() {
+  const u = (document.getElementById('salary-emp') || {}).value;
+  const amount = Number((document.getElementById('salary-amount') || {}).value);
+  if (!u || isNaN(amount) || amount < 0) {
+    showToast('❌ اختر موظفاً وأدخل مرتباً صحيحاً', 'error');
+    return;
+  }
+  const { error } = await sb.from('employees').update({ salary: amount }).eq('username', u);
+  if (error) {
+    console.warn(error);
+    showToast('⚠️ تعذر الحفظ في قاعدة البيانات (تحقق من عمود salary) — تم التحديث محلياً', 'error');
+  }
+  const e = EMPLOYEES.find(x => x.user === u);
+  if (e) e.salary = amount;
+  closeModal('edit-salary-modal');
+  showToast('✅ تم تحديث المرتب');
+  renderSalaries();
+}
+
+async function submitBonus() {
+  const u = (document.getElementById('bonus-emp') || {}).value;
+  const amount = Number((document.getElementById('bonus-amount') || {}).value);
+  const reason = (document.getElementById('bonus-reason') || {}).value.trim();
+  const date = (document.getElementById('bonus-date') || {}).value || new Date().toISOString().slice(0, 10);
+  if (!u || !amount || amount <= 0) {
+    showToast('❌ اختر موظفاً وأدخل مبلغ المكافأة', 'error');
+    return;
+  }
+  const row = {
+    id: 'b_' + Date.now(),
+    username: u,
+    amount,
+    reason,
+    date,
+    created_by: currentUser ? currentUser.username : 'admin'
+  };
+  try {
+    const { data, error } = await sb.from('bonuses').insert([{
+      username: u, amount, reason, date, created_by: row.created_by
+    }]).select();
+    if (!error && data && data[0]) row.id = data[0].id;
+  } catch (_) {}
+  BONUSES.unshift(row);
+  saveBonusesLocal();
+  closeModal('add-bonus-modal');
+  document.getElementById('bonus-amount').value = '';
+  document.getElementById('bonus-reason').value = '';
+  showToast('🎁 تم إضافة المكافأة');
+  renderSalaries();
+}
+
+async function deleteBonus(id) {
+  if (!confirm('حذف هذه المكافأة؟')) return;
+  BONUSES = BONUSES.filter(b => String(b.id) !== String(id));
+  saveBonusesLocal();
+  try { await sb.from('bonuses').delete().eq('id', id); } catch (_) {}
+  showToast('🗑️ تم الحذف');
+  renderSalaries();
+}
+
+function openEditPerms(username) {
+  const e = EMPLOYEES.find(x => x.user === username);
+  if (!e) return;
+  document.getElementById('edit-perms-user').value = username;
+  document.getElementById('edit-perms-name').textContent = e.name + ' (@' + username + ')';
+  const grid = document.getElementById('edit-perms-grid');
+  const p = { ...DEFAULT_EMP_PERMS, ...(e.permissions || {}) };
+  grid.innerHTML = Object.keys(PERM_LABELS).map(k => `
+    <label class="perm-item"><input type="checkbox" data-p="${k}" ${p[k] ? 'checked' : ''}> ${PERM_LABELS[k]}</label>
+  `).join('');
+  openModal('edit-perms-modal');
+}
+
+async function saveEmployeePerms() {
+  const u = document.getElementById('edit-perms-user').value;
+  if (!u) return;
+  const perms = { ...DEFAULT_EMP_PERMS };
+  document.querySelectorAll('#edit-perms-grid input[data-p]').forEach(cb => {
+    perms[cb.dataset.p] = !!cb.checked;
+  });
+  const map = loadPermsMap();
+  map[u] = perms;
+  savePermsMap(map);
+  const e = EMPLOYEES.find(x => x.user === u);
+  if (e) e.permissions = perms;
+  try { await sb.from('employees').update({ permissions: perms }).eq('username', u); } catch (_) {}
+  closeModal('edit-perms-modal');
+  showToast('🔐 تم حفظ صلاحيات الموظف');
+  renderSalaries();
+  renderEmployees();
 }
 
 async function deleteEmployee(id) {
@@ -3996,6 +4438,17 @@ function openModal(id) {
   if (id !== 'video-modal-overlay') document.body.classList.add('modal-open');
   if (id === 'upload-file-modal') populateUploadSelects();
   if (id === 'schedule-meeting-modal') populateMeetingParticipants();
+  if (id === 'add-bonus-modal' || id === 'edit-salary-modal') {
+    const opts = EMPLOYEES.filter(e => e.user !== 'admin').map(e => `<option value="${e.user}">${e.name}</option>`).join('');
+    const sid = id === 'add-bonus-modal' ? 'bonus-emp' : 'salary-emp';
+    const sel = document.getElementById(sid);
+    if (sel) sel.innerHTML = opts || '<option value="">—</option>';
+    if (id === 'add-bonus-modal') {
+      const d = document.getElementById('bonus-date');
+      if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+    }
+    if (id === 'edit-salary-modal') fillSalaryField();
+  }
   if (id === 'add-task-modal') {
     const assignSel = document.getElementById('new-task-assign');
     if (assignSel) {
