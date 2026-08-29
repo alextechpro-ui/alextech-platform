@@ -1041,6 +1041,7 @@
 </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -1227,10 +1228,32 @@
       <!-- FILES PAGE -->
       <div class="page" id="page-files">
         <div class="card-header-flex">
-          <h2>📁 مستودع الملفات</h2>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <h2>📁 مستودع الملفات + أوفيس</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn-primary" onclick="openModal('upload-file-modal')">⬆️ رفع ملف</button>
           </div>
+        </div>
+        <div class="office-apps-bar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;">
+          <button class="office-app-btn" onclick="createAndOpenOffice('word')" style="background:white;border:1px solid var(--gray-200);border-radius:14px;padding:16px 12px;cursor:pointer;font-family:Cairo,sans-serif;transition:all .2s;text-align:center;">
+            <div style="font-size:32px;">📝</div>
+            <div style="font-weight:700;font-size:13px;margin-top:6px;color:var(--navy)">Word</div>
+            <div style="font-size:10px;color:var(--gray-500)">مستند جديد</div>
+          </button>
+          <button class="office-app-btn" onclick="createAndOpenOffice('excel')" style="background:white;border:1px solid var(--gray-200);border-radius:14px;padding:16px 12px;cursor:pointer;font-family:Cairo,sans-serif;transition:all .2s;text-align:center;">
+            <div style="font-size:32px;">📊</div>
+            <div style="font-weight:700;font-size:13px;margin-top:6px;color:var(--navy)">Excel</div>
+            <div style="font-size:10px;color:var(--gray-500)">جدول بيانات جديد</div>
+          </button>
+          <button class="office-app-btn" onclick="createAndOpenOffice('powerpoint')" style="background:white;border:1px solid var(--gray-200);border-radius:14px;padding:16px 12px;cursor:pointer;font-family:Cairo,sans-serif;transition:all .2s;text-align:center;">
+            <div style="font-size:32px;">📑</div>
+            <div style="font-weight:700;font-size:13px;margin-top:6px;color:var(--navy)">PowerPoint</div>
+            <div style="font-size:10px;color:var(--gray-500)">عرض تقديمي جديد</div>
+          </button>
+          <button class="office-app-btn" onclick="openModal('upload-file-modal')" style="background:white;border:1px solid var(--gray-200);border-radius:14px;padding:16px 12px;cursor:pointer;font-family:Cairo,sans-serif;transition:all .2s;text-align:center;">
+            <div style="font-size:32px;">📂</div>
+            <div style="font-weight:700;font-size:13px;margin-top:6px;color:var(--navy)">فتح ملف</div>
+            <div style="font-size:10px;color:var(--gray-500)">رفع وتشغيل</div>
+          </button>
         </div>
         <div class="upload-zone" onclick="openModal('upload-file-modal')"
           ondragover="event.preventDefault(); this.style.background='rgba(201,168,76,0.12)'"
@@ -1249,7 +1272,7 @@
           <button class="btn-secondary" onclick="filterFiles('powerpoint')">📑 PowerPoint</button>
           <button class="btn-secondary" onclick="filterFiles('access')">🗄️ Access</button>
         </div>
-        <div class="alert info" style="margin-bottom:14px;">📝 Word · 📊 Excel · 📑 PowerPoint تفتح <strong>داخل المنصة</strong> للمعاينة. 🗄️ Access للتنزيل فقط. ارفع الملف ثم اضغط «فتح داخل المنصة».</div>
+        <div class="alert info" style="margin-bottom:14px;">📝 Word · 📊 Excel · 📑 PowerPoint: أنشئ ملف جديد من الأزرار فوق، أو ارفع ملف واضغط <strong>فتح داخل المنصة</strong>. Excel يُعدَّل مباشرة داخل المنصة.</div>
         <div class="files-grid" id="files-grid"></div>
       </div>
 
@@ -1946,16 +1969,17 @@ let EVALUATIONS = [];
 let currentTaskFilter = 'all';
 const DEFAULT_EMP_PERMS = {
   dashboard: true, tasks: true, files: true, meetings: true, training: true, salaries: true,
-  employees: false, reports: false, settings: false, train_manage: false
+  employees: false, reports: false, settings: false, train_manage: false, issue_certs: false
 };
 const ALL_PERMS = {
   dashboard: true, tasks: true, files: true, meetings: true, training: true, salaries: true,
-  employees: true, reports: true, settings: true, train_manage: true
+  employees: true, reports: true, settings: true, train_manage: true, issue_certs: true
 };
 const PERM_LABELS = {
   dashboard: 'لوحة التحكم', tasks: 'المهام', files: 'الملفات', meetings: 'الاجتماعات',
   training: 'منصة التدريب', salaries: 'المرتبات والمكافآت', employees: 'الموظفون',
-  reports: 'التقارير', settings: 'إعدادات المنصة', train_manage: 'إدارة التدريب والبث'
+  reports: 'التقارير', settings: 'إعدادات المنصة', train_manage: 'إدارة التدريب والبث',
+  issue_certs: 'إصدار الشهادات (مدير)'
 };
 function getUserPerms(user) {
   if (!user) return { ...DEFAULT_EMP_PERMS };
@@ -2289,6 +2313,7 @@ async function enterPlatform(platform) {
 
   await loadFromSupabase();
   applyNavPermissions();
+  try { applyCertButtonVisibility(); } catch(_){}
 
   if (currentPlatform === 'training') {
     showPage('training');
@@ -3455,7 +3480,7 @@ function showPage(pageId, navEl) {
   const panel = document.getElementById('notif-panel');
   if (panel) panel.classList.remove('active');
   if (pageId === 'settings' && currentUser && currentUser.isAdmin) renderAdminSettings();
-  if (pageId === 'training') { initTrainingPlatform(); renderCertificates(); }
+  if (pageId === 'training') { initTrainingPlatform(); renderCertificates(); applyCertButtonVisibility(); }
   if (pageId === 'salaries') renderSalaries();
   if (pageId === 'hr') { renderAttendance(); renderEvaluations(); renderTodayAttendance(); }
   if (pageId === 'reports') renderReports();
@@ -3670,6 +3695,10 @@ function openFile(url, type, name) {
     return;
   }
   if (isOffice) {
+    if (t === 'excel' || /\.(xlsx?|csv)$/i.test(n)) {
+      openExcelForEdit(url, name || 'Excel');
+      return;
+    }
     openOfficeViewer(url, name || 'مستند Office', t);
     return;
   }
@@ -4905,6 +4934,218 @@ async function confirmResetPlatform() {
 
 
 
+
+// ============ OFFICE APPS (Word / Excel / PowerPoint) ============
+let excelGridData = [['', '', ''], ['', '', ''], ['', '', '']];
+let pptSlides = [{ title: 'الشريحة 1', body: 'اكتب المحتوى هنا' }];
+
+function createAndOpenOffice(kind) {
+  if (kind === 'excel') {
+    excelGridData = [
+      ['العنوان', 'القيمة', 'ملاحظات'],
+      ['', '', ''],
+      ['', '', ''],
+      ['', '', '']
+    ];
+    document.getElementById('excel-edit-file-id').value = '';
+    document.getElementById('excel-editor-title').textContent = 'جدول جديد';
+    renderExcelGrid();
+    openModal('excel-editor-overlay');
+    return;
+  }
+  if (kind === 'word') {
+    document.getElementById('word-doc-name').value = 'مستند-' + new Date().toISOString().slice(0,10);
+    document.getElementById('word-editor-title').textContent = 'مستند جديد';
+    document.getElementById('word-editor-body').innerHTML = '<p style="color:#888">ابدأ الكتابة هنا...</p>';
+    openModal('word-editor-overlay');
+    return;
+  }
+  if (kind === 'powerpoint') {
+    pptSlides = [
+      { title: 'عنوان العرض', body: 'نقطة 1\nنقطة 2\nنقطة 3' },
+      { title: 'الشريحة 2', body: 'المحتوى' }
+    ];
+    document.getElementById('ppt-doc-name').value = 'عرض-' + new Date().toISOString().slice(0,10);
+    renderPptSlides();
+    openModal('ppt-editor-overlay');
+    return;
+  }
+}
+
+function renderExcelGrid() {
+  const table = document.getElementById('excel-grid');
+  if (!table) return;
+  const rows = excelGridData.length;
+  const cols = Math.max(...excelGridData.map(r => r.length), 1);
+  let html = '<thead><tr><th>#</th>';
+  for (let c = 0; c < cols; c++) html += '<th>' + String.fromCharCode(65 + (c % 26)) + (c >= 26 ? 2 : '') + '</th>';
+  html += '</tr></thead><tbody>';
+  for (let r = 0; r < rows; r++) {
+    html += '<tr><td style="background:var(--gray-100);font-weight:600">' + (r + 1) + '</td>';
+    for (let c = 0; c < cols; c++) {
+      const val = (excelGridData[r] && excelGridData[r][c] != null) ? excelGridData[r][c] : '';
+      html += '<td contenteditable="true" data-r="' + r + '" data-c="' + c + '" oninput="excelCellInput(this)" style="min-width:90px">' + String(val).replace(/</g,'&lt;') + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+function excelCellInput(el) {
+  const r = +el.dataset.r, c = +el.dataset.c;
+  if (!excelGridData[r]) excelGridData[r] = [];
+  excelGridData[r][c] = el.innerText;
+}
+function excelAddRow() {
+  const cols = Math.max(...excelGridData.map(r => r.length), 3);
+  excelGridData.push(Array(cols).fill(''));
+  renderExcelGrid();
+}
+function excelAddCol() {
+  excelGridData.forEach(r => r.push(''));
+  renderExcelGrid();
+}
+
+async function saveExcelFromEditor() {
+  if (typeof XLSX === 'undefined') {
+    showToast('❌ مكتبة Excel لم تُحمّل — تحقق من الإنترنت', 'error');
+    return;
+  }
+  const name = prompt('اسم ملف Excel:', 'جدول-' + new Date().toISOString().slice(0,10) + '.xlsx') || 'sheet.xlsx';
+  const fname = name.endsWith('.xlsx') ? name : name + '.xlsx';
+  const ws = XLSX.utils.aoa_to_sheet(excelGridData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const file = new File([blob], fname, { type: blob.type });
+  const ok = await uploadOfficeFile(file, 'excel');
+  if (ok) {
+    closeModal('excel-editor-overlay');
+    showToast('✅ تم حفظ Excel في المنصة');
+    showPage('files', null);
+  }
+}
+
+async function saveWordFromEditor() {
+  let name = (document.getElementById('word-doc-name') || {}).value || 'مستند';
+  name = name.replace(/[\\/:*?"<>|]/g, '-');
+  if (!name.endsWith('.doc')) name += '.doc';
+  const body = (document.getElementById('word-editor-body') || {}).innerHTML || '';
+  const html = '<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Document</title></head><body>' + body + '</body></html>';
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const file = new File([blob], name, { type: 'application/msword' });
+  const ok = await uploadOfficeFile(file, 'word');
+  if (ok) {
+    closeModal('word-editor-overlay');
+    showToast('✅ تم حفظ Word في المنصة');
+    showPage('files', null);
+  }
+}
+
+function renderPptSlides() {
+  const box = document.getElementById('ppt-slides');
+  if (!box) return;
+  box.innerHTML = pptSlides.map((s, i) => `
+    <div style="border:1px solid var(--gray-200);border-radius:12px;padding:14px;background:var(--gray-100)">
+      <div style="font-size:11px;color:var(--gray-500);margin-bottom:6px">شريحة ${i + 1}</div>
+      <input value="${(s.title||'').replace(/"/g,'&quot;')}" oninput="pptSlides[${i}].title=this.value" placeholder="عنوان الشريحة" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--gray-200);font-family:Cairo,sans-serif;font-weight:700;margin-bottom:8px">
+      <textarea oninput="pptSlides[${i}].body=this.value" rows="3" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--gray-200);font-family:Cairo,sans-serif">${s.body||''}</textarea>
+    </div>`).join('');
+}
+function pptAddSlide() {
+  pptSlides.push({ title: 'شريحة ' + (pptSlides.length + 1), body: '' });
+  renderPptSlides();
+}
+
+async function savePptFromEditor() {
+  let name = (document.getElementById('ppt-doc-name') || {}).value || 'عرض';
+  name = name.replace(/[\\/:*?"<>|]/g, '-');
+  if (!name.endsWith('.ppt')) name += '.ppt';
+  // HTML presentation that PowerPoint / browsers can open
+  const slidesHtml = pptSlides.map((s, i) => `
+    <div style="page-break-after:always;padding:40px;min-height:400px;background:linear-gradient(135deg,#1A2744,#243260);color:white;font-family:Cairo,sans-serif;direction:rtl">
+      <h1 style="color:#E8C96A;font-size:28px">${(s.title||'').replace(/</g,'&lt;')}</h1>
+      <div style="font-size:18px;line-height:1.8;margin-top:20px;white-space:pre-wrap">${(s.body||'').replace(/</g,'&lt;')}</div>
+      <div style="position:absolute;bottom:20px;left:30px;font-size:12px;opacity:.5">${i + 1} / ${pptSlides.length}</div>
+    </div>`).join('');
+  const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Presentation</title></head><body>' + slidesHtml + '</body></html>';
+  const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-powerpoint' });
+  const file = new File([blob], name, { type: blob.type });
+  const ok = await uploadOfficeFile(file, 'powerpoint');
+  if (ok) {
+    closeModal('ppt-editor-overlay');
+    showToast('✅ تم حفظ العرض في المنصة');
+    showPage('files', null);
+  }
+}
+
+async function uploadOfficeFile(file, type) {
+  try {
+    let url = '';
+    let storage_path = '';
+    try {
+      const path = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._\u0600-\u06FF-]/g, '_');
+      const { error: upErr } = await sb.storage.from('alextech-files').upload(path, file, { upsert: false });
+      if (!upErr) {
+        storage_path = path;
+        const { data: pub } = sb.storage.from('alextech-files').getPublicUrl(path);
+        url = pub?.publicUrl || '';
+      } else {
+        url = URL.createObjectURL(file);
+      }
+    } catch (e) {
+      url = URL.createObjectURL(file);
+    }
+    const owner = currentUser && !currentUser.isAdmin ? currentUser.username : 'all';
+    const row = {
+      name: file.name,
+      type: type || 'file',
+      size: file.size,
+      url,
+      owner,
+      storage_path: storage_path || null
+    };
+    const { error } = await sb.from('files').insert([row]);
+    if (error) {
+      showToast('❌ ' + error.message, 'error');
+      return false;
+    }
+    await loadFromSupabase();
+    // auto open
+    if (url) {
+      setTimeout(() => openFile(url, type, file.name), 400);
+    }
+    return true;
+  } catch (e) {
+    showToast('❌ ' + (e.message || e), 'error');
+    return false;
+  }
+}
+
+/** فتح Excel للتعديل داخل المنصة إن أمكن */
+async function openExcelForEdit(url, name) {
+  if (typeof XLSX === 'undefined') {
+    openOfficeViewer(url, name, 'excel');
+    return;
+  }
+  try {
+    showToast('⏳ جاري تحميل الجدول...');
+    const res = await fetch(url);
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    excelGridData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    if (!excelGridData.length) excelGridData = [['']];
+    document.getElementById('excel-editor-title').textContent = name || 'Excel';
+    renderExcelGrid();
+    openModal('excel-editor-overlay');
+  } catch (e) {
+    console.warn(e);
+    openOfficeViewer(url, name, 'excel');
+  }
+}
+
 // ============ LIVE CLOCK ============
 function updateTopbarClock() {
   const clock = document.getElementById('topbar-clock');
@@ -5249,12 +5490,27 @@ function loadCertsLocal() {
 function saveCertsLocal() { localStorage.setItem('alextech_certs', JSON.stringify(CERTS)); }
 
 
+
+function applyCertButtonVisibility() {
+  const show = canIssueCerts();
+  document.querySelectorAll('[onclick*="openIssueCert"], [onclick*="issue-cert-modal"]').forEach(btn => {
+    btn.style.display = show ? '' : 'none';
+  });
+  const certHeaderBtn = document.querySelector('#page-training .card-header-flex .btn-primary');
+  // already handled by admin-only-train + this
+}
+
 function openIssueCert() {
-  if (!currentUser || !(currentUser.isAdmin || currentUser.username === 'admin')) {
-    showToast('❌ إصدار الشهادات متاح للمدير فقط', 'error');
+  if (!canIssueCerts()) {
+    showToast('❌ إصدار الشهادات صلاحية للمدير فقط', 'error');
     return;
   }
   openModal('issue-cert-modal');
+}
+function canIssueCerts() {
+  if (!currentUser) return false;
+  if (currentUser.isAdmin || currentUser.username === 'admin') return true;
+  return !!can('issue_certs');
 }
 
 function populateCertEmpSelect() {
@@ -5369,7 +5625,7 @@ function certificateHTML(c) {
 }
 
 function previewCertificate() {
-  if (!currentUser || !(currentUser.isAdmin || currentUser.username === 'admin')) { showToast('❌ للمدير فقط', 'error'); return; }
+  if (!canIssueCerts()) { showToast('❌ للمدير فقط', 'error'); return; }
   const data = buildCertData();
   if (!data) return;
   const root = document.getElementById('certificate-print-root');
@@ -5381,7 +5637,7 @@ function previewCertificate() {
 }
 
 function issueCertificate() {
-  if (!currentUser || !(currentUser.isAdmin || currentUser.username === 'admin')) { showToast('❌ للمدير فقط', 'error'); return; }
+  if (!canIssueCerts()) { showToast('❌ إصدار الشهادات للمدير فقط', 'error'); return; }
   const data = buildCertData();
   if (!data) return;
   CERTS.unshift(data);
@@ -5656,6 +5912,59 @@ document.addEventListener('click', e => {
       <button class="btn-secondary" onclick="closeModal('add-eval-modal')">إلغاء</button>
       <button class="btn-primary" onclick="submitEvaluation()">💾 حفظ التقييم</button>
     </div>
+  </div>
+</div>
+
+
+<!-- EXCEL EDITOR -->
+<div class="modal-overlay" id="excel-editor-overlay">
+  <div class="modal" style="max-width:95%;width:960px;max-height:92vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <h3 style="margin:0">📊 Excel — <span id="excel-editor-title">جدول جديد</span></h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm gold" onclick="excelAddRow()">➕ صف</button>
+        <button class="btn-sm outline" onclick="excelAddCol()">➕ عمود</button>
+        <button class="btn-primary" onclick="saveExcelFromEditor()">💾 حفظ في المنصة</button>
+        <button class="btn-secondary" onclick="closeModal('excel-editor-overlay')">إغلاق</button>
+      </div>
+    </div>
+    <input type="hidden" id="excel-edit-file-id" value="">
+    <div style="overflow:auto;flex:1;border:1px solid var(--gray-200);border-radius:10px;max-height:60vh;">
+      <table id="excel-grid" class="data-table" style="min-width:100%;"></table>
+    </div>
+    <p style="font-size:11px;color:var(--gray-500);margin-top:8px;">عدّل الخلايا مباشرة ثم احفظ — يُنشأ ملف .xlsx ويُرفع للمستودع.</p>
+  </div>
+</div>
+
+<!-- WORD EDITOR -->
+<div class="modal-overlay" id="word-editor-overlay">
+  <div class="modal" style="max-width:900px;width:95%;max-height:92vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <h3 style="margin:0">📝 Word — <span id="word-editor-title">مستند جديد</span></h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="saveWordFromEditor()">💾 حفظ في المنصة</button>
+        <button class="btn-secondary" onclick="closeModal('word-editor-overlay')">إغلاق</button>
+      </div>
+    </div>
+    <input type="text" id="word-doc-name" placeholder="اسم المستند" style="margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid var(--gray-200);font-family:Cairo,sans-serif;">
+    <div id="word-editor-body" contenteditable="true" style="flex:1;min-height:320px;max-height:55vh;overflow:auto;border:1px solid var(--gray-200);border-radius:12px;padding:18px;background:white;font-family:Cairo,sans-serif;font-size:15px;line-height:1.8;direction:rtl;outline:none;"></div>
+    <p style="font-size:11px;color:var(--gray-500);margin-top:8px;">اكتب مباشرة هنا. عند الحفظ يُنشأ ملف Word ويُحفظ في المستودع ويمكن فتحه لاحقاً داخل المنصة.</p>
+  </div>
+</div>
+
+<!-- PPT EDITOR (simple slides) -->
+<div class="modal-overlay" id="ppt-editor-overlay">
+  <div class="modal" style="max-width:900px;width:95%;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <h3 style="margin:0">📑 PowerPoint — شرائح</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm gold" onclick="pptAddSlide()">➕ شريحة</button>
+        <button class="btn-primary" onclick="savePptFromEditor()">💾 حفظ في المنصة</button>
+        <button class="btn-secondary" onclick="closeModal('ppt-editor-overlay')">إغلاق</button>
+      </div>
+    </div>
+    <input type="text" id="ppt-doc-name" placeholder="اسم العرض" style="margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid var(--gray-200);font-family:Cairo,sans-serif;width:100%;">
+    <div id="ppt-slides" style="display:flex;flex-direction:column;gap:12px;max-height:55vh;overflow:auto;"></div>
   </div>
 </div>
 
