@@ -21,7 +21,7 @@
     --green: #2ECC71;
     --red: #E74C3C;
     --orange: #F39C12;
-    --sidebar-w: 260px;
+    --sidebar-w: 220px;
   }
 
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -132,18 +132,27 @@
   .nav-section { padding:15px 0; flex:1; overflow-y:auto; }
   .nav-section-title { color:var(--gray-500); font-size:10px; font-weight:600; padding:8px 20px; letter-spacing:1px; text-transform:uppercase; }
   .nav-item {
-    display:flex; align-items:center; gap:12px;
-    padding:12px 20px; cursor:pointer; transition:all 0.2s;
-    color:var(--gray-200); font-size:13px; border-right:3px solid transparent;
-    margin:2px 0; position:relative;
+    display:flex; align-items:center; gap:8px;
+    padding:8px 14px; cursor:pointer; transition:all 0.2s;
+    color:var(--gray-200); font-size:12px; border-right:3px solid transparent;
+    margin:1px 0; position:relative;
   }
   .nav-item:hover { background:rgba(255,255,255,0.05); color:var(--white); }
   .nav-item.active { background:rgba(201,168,76,0.1); color:var(--gold); border-right-color:var(--gold); }
-  .nav-item .icon { font-size:18px; width:22px; text-align:center; }
+  .nav-item .icon { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
   .nav-badge {
     margin-right:auto; background:var(--gold); color:var(--navy-dark);
-    font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px;
+    font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px;
   }
+  .nav-section { padding:8px 0; flex:1; overflow-y:auto; }
+  .nav-section-title { color:var(--gray-500); font-size:9px; font-weight:600; padding:6px 14px; letter-spacing:0.5px; text-transform:uppercase; }
+  .sidebar-logo { padding:14px 12px !important; }
+  .sidebar-logo img { width:40px !important; }
+  .sidebar-logo-text { font-size:13px !important; }
+  .sidebar-user { padding:12px !important; }
+  .user-avatar { width:34px !important; height:34px !important; font-size:13px !important; }
+  .sidebar-footer { padding:10px 12px !important; }
+  .btn-logout { padding:8px !important; font-size:12px !important; }
   .sidebar-footer { padding:15px 20px; border-top:1px solid rgba(255,255,255,0.06); }
   .btn-logout {
     width:100%; padding:10px; background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3);
@@ -1121,7 +1130,7 @@
       <div class="nav-section-title" id="admin-nav-title" style="display:none">الإدارة</div>
       <div class="nav-item" id="nav-employees" data-perm="employees" onclick="showPage('employees',this)" style="display:none"><span class="icon"><i class="fas fa-users"></i></span> الموظفون</div>
       <div class="nav-item" id="nav-hr" data-perm="employees" onclick="showPage('hr',this)" style="display:none"><span class="icon">🏢</span> الموارد البشرية</div>
-      <div class="nav-item" id="nav-reports" data-perm="reports" onclick="showPage('reports',this)" style="display:none"><span class="icon"><i class="fas fa-chart-bar"></i></span> التقارير</div>
+      <div class="nav-item" id="nav-reports" data-perm="reports" onclick="showPage('reports',this)" style="display:none"><span class="icon">📊</span> التقارير</div>
       <div class="nav-section-title" id="admin-nav-title2" style="display:none">النظام</div>
       <div class="nav-item" id="nav-settings" data-perm="settings" onclick="showPage('settings',this)" style="display:none"><span class="icon"><i class="fas fa-cog"></i></span> إعدادات المنصة</div>
     </div>
@@ -1240,6 +1249,7 @@
           <button class="btn-secondary" onclick="filterFiles('powerpoint')">📑 PowerPoint</button>
           <button class="btn-secondary" onclick="filterFiles('access')">🗄️ Access</button>
         </div>
+        <div class="alert info" style="margin-bottom:14px;">📝 Word · 📊 Excel · 📑 PowerPoint تفتح <strong>داخل المنصة</strong> للمعاينة. 🗄️ Access للتنزيل فقط. ارفع الملف ثم اضغط «فتح داخل المنصة».</div>
         <div class="files-grid" id="files-grid"></div>
       </div>
 
@@ -1518,7 +1528,7 @@
             <button class="btn-meet primary" onclick="startLiveTrainingNow()">📡 بدء بث مباشر</button>
             <button class="btn-meet secondary" onclick="openModal('schedule-live-modal')">📅 جدولة بث</button>
             <button class="btn-meet secondary" onclick="document.getElementById('rec-panel').scrollIntoView({behavior:'smooth'})">⏺️ تسجيل فقط</button>
-            <button class="btn-meet secondary" onclick="openModal('issue-cert-modal')" style="border-color:var(--gold);">🏅 إصدار شهادة</button>
+            <button class="btn-meet secondary admin-only-train" onclick="openIssueCert()" style="border-color:var(--gold);">🏅 إصدار شهادة</button>
           </div>
           <div id="emp-training-hint" style="display:none;font-size:13px;color:rgba(255,255,255,0.75);max-width:320px;">
             يمكنك مشاهدة التدريبات المحفوظة، الانضمام للبث المباشر، والدردشة مع الفريق.
@@ -1625,7 +1635,7 @@
 
         <div class="card-header-flex" style="margin-top:25px;">
           <h2 style="font-size:16px;">🏅 شهادات التدريب</h2>
-          <button class="btn-primary admin-only-train" onclick="openModal('issue-cert-modal')">➕ إصدار شهادة</button>
+          <button class="btn-primary admin-only-train" onclick="openIssueCert()">➕ إصدار شهادة</button>
         </div>
         <div id="certs-list" class="trainings-grid"></div>
       </div>
@@ -2020,7 +2030,7 @@ function formatBytes(b) {
 }
 
 function getFileIcon(type) {
-  return { pdf: '📄', excel: '📊', word: '📝', image: '🖼️', zip: '🗜️' }[type] || '📎';
+  return { pdf: '📄', excel: '📊', word: '📝', powerpoint: '📑', access: '🗄️', image: '🖼️', zip: '🗜️', video: '🎬' }[type] || '📎';
 }
 
 // ============ LOAD FROM SUPABASE ============
@@ -3633,8 +3643,8 @@ function renderFiles(query = '', typeFilter = 'all') {
       <div class="file-size">${f.size}</div>
       <div class="file-date">${f.date} · 👤 ${ownerName}</div>
       <div class="file-actions" style="flex-wrap:wrap;">
-        ${hasUrl ? `<button class="file-action-btn view" onclick="openFile('${f.url}')">فتح</button>
-        <button class="file-action-btn view" onclick="downloadFile('${f.url}','${f.name.replace(/'/g,"\\'")}')">تنزيل</button>` : `<button class="file-action-btn view" onclick="showToast('لا يوجد رابط للملف','error')">فتح</button>`}
+        ${hasUrl ? `<button class="file-action-btn view" onclick="openFile('${f.url}','${f.type}','${String(f.name||'').replace(/'/g,"\\'")}')">📂 فتح داخل المنصة</button>
+        <button class="file-action-btn view" onclick="downloadFile('${f.url}','${String(f.name||'').replace(/'/g,"\\'")}')">تنزيل</button>` : `<button class="file-action-btn view" onclick="showToast('لا يوجد رابط للملف','error')">فتح</button>`}
         ${canDelete ? `<button class="file-action-btn delete" onclick="deleteFile(${f.id})">حذف</button>` : ''}
       </div>
     </div>`;
@@ -3644,10 +3654,78 @@ function renderFiles(query = '', typeFilter = 'all') {
 function searchFiles(q) { renderFiles(q); }
 function filterFiles(t) { renderFiles('', t); }
 
-function openFile(url) {
+function openFile(url, type, name) {
   if (!url) { showToast('❌ لا يوجد رابط', 'error'); return; }
+  const t = (type || '').toLowerCase();
+  const n = (name || url.split('/').pop() || 'ملف').toLowerCase();
+  const isOffice = ['word','excel','powerpoint','ppt','pptx','doc','docx','xls','xlsx','csv'].includes(t)
+    || /\.(docx?|xlsx?|pptx?|csv)$/i.test(n);
+  const isAccess = t === 'access' || /\.(accdb|mdb)$/i.test(n);
+  const isPdf = t === 'pdf' || /\.pdf$/i.test(n);
+  const isImage = t === 'image' || /\.(png|jpe?g|gif|webp)$/i.test(n);
+
+  if (isAccess) {
+    showToast('🗄️ ملفات Access تُفتح بالتنزيل فقط');
+    downloadFile(url, name || 'file');
+    return;
+  }
+  if (isOffice) {
+    openOfficeViewer(url, name || 'مستند Office', t);
+    return;
+  }
+  if (isPdf || isImage) {
+    openOfficeViewer(url, name || 'ملف', t, true);
+    return;
+  }
   window.open(url, '_blank');
 }
+
+let _officeCurrentUrl = '';
+function openOfficeViewer(url, title, type, direct) {
+  _officeCurrentUrl = url;
+  const overlay = document.getElementById('office-viewer-overlay');
+  const iframe = document.getElementById('office-viewer-iframe');
+  const fallback = document.getElementById('office-viewer-fallback');
+  const titleEl = document.getElementById('office-viewer-title');
+  const dlBtn = document.getElementById('office-download-btn');
+  const fbDl = document.getElementById('office-fallback-dl');
+  if (titleEl) titleEl.textContent = '📄 ' + (title || 'معاينة الملف');
+  if (dlBtn) dlBtn.onclick = () => downloadFile(url, title);
+  if (fbDl) fbDl.onclick = () => downloadFile(url, title);
+  if (fallback) fallback.style.display = 'none';
+  if (iframe) {
+    iframe.style.display = 'block';
+    if (direct) {
+      iframe.src = url;
+    } else {
+      // Microsoft Office Online Viewer — يعمل مع الروابط العامة
+      const src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(url);
+      iframe.src = src;
+      // لو فشل التحميل بعد 8 ثواني نعرض خيار التنزيل
+      setTimeout(() => {
+        try {
+          // can't really detect iframe cross-origin failure; show tip
+        } catch(_){}
+      }, 8000);
+    }
+  }
+  if (overlay) {
+    overlay.classList.add('active');
+    document.body.classList.add('modal-open');
+  }
+  showToast('📂 جاري فتح الملف داخل المنصة...');
+}
+function closeOfficeViewer() {
+  const overlay = document.getElementById('office-viewer-overlay');
+  const iframe = document.getElementById('office-viewer-iframe');
+  if (iframe) iframe.src = 'about:blank';
+  if (overlay) overlay.classList.remove('active');
+  document.body.classList.remove('modal-open');
+}
+function openFileExternal() {
+  if (_officeCurrentUrl) window.open(_officeCurrentUrl, '_blank');
+}
+
 
 function downloadFile(url, name) {
   if (!url) { showToast('❌ لا يوجد رابط', 'error'); return; }
@@ -3721,8 +3799,11 @@ async function submitUpload() {
     if (['pdf'].includes(ext)) type = 'pdf';
     else if (['xls', 'xlsx', 'csv'].includes(ext)) type = 'excel';
     else if (['doc', 'docx'].includes(ext)) type = 'word';
+    else if (['ppt', 'pptx'].includes(ext)) type = 'powerpoint';
+    else if (['mdb', 'accdb'].includes(ext)) type = 'access';
     else if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) type = 'image';
     else if (['zip', 'rar'].includes(ext)) type = 'zip';
+    else if (['mp4', 'webm', 'mov'].includes(ext)) type = 'video';
 
     let url = '';
     let storage_path = '';
@@ -5167,6 +5248,15 @@ function loadCertsLocal() {
 }
 function saveCertsLocal() { localStorage.setItem('alextech_certs', JSON.stringify(CERTS)); }
 
+
+function openIssueCert() {
+  if (!currentUser || !(currentUser.isAdmin || currentUser.username === 'admin')) {
+    showToast('❌ إصدار الشهادات متاح للمدير فقط', 'error');
+    return;
+  }
+  openModal('issue-cert-modal');
+}
+
 function populateCertEmpSelect() {
   const sel = document.getElementById('cert-emp');
   if (!sel) return;
@@ -5279,6 +5369,7 @@ function certificateHTML(c) {
 }
 
 function previewCertificate() {
+  if (!currentUser || !(currentUser.isAdmin || currentUser.username === 'admin')) { showToast('❌ للمدير فقط', 'error'); return; }
   const data = buildCertData();
   if (!data) return;
   const root = document.getElementById('certificate-print-root');
@@ -5290,6 +5381,7 @@ function previewCertificate() {
 }
 
 function issueCertificate() {
+  if (!currentUser || !(currentUser.isAdmin || currentUser.username === 'admin')) { showToast('❌ للمدير فقط', 'error'); return; }
   const data = buildCertData();
   if (!data) return;
   CERTS.unshift(data);
