@@ -233,6 +233,20 @@
   .admin-only-train { display:none; }
   body.is-admin .admin-only-train { display:flex !important; }
   body.is-admin .admin-only-block { display:block !important; }
+
+  body.is-admin #nav-employees,
+  body.is-admin #nav-hr,
+  body.is-admin #nav-reports,
+  body.is-admin #nav-settings,
+  body.is-admin #admin-nav-title,
+  body.is-admin #admin-nav-title2 {
+    display: flex !important;
+  }
+  body.is-admin #admin-nav-title,
+  body.is-admin #admin-nav-title2 {
+    display: block !important;
+  }
+
   .admin-only-block { display:none; }
 
   /* Training platform */
@@ -1320,32 +1334,49 @@
       <div class="page" id="page-reports">
         <div class="card-header-flex">
           <h2>📊 التقارير والإحصائيات</h2>
-          <button class="btn-primary">⬇️ تصدير تقرير</button>
+          <button class="btn-primary" onclick="exportReportsCSV()">⬇️ تصدير تقرير</button>
         </div>
-        <div class="stats-grid" style="margin-bottom:25px;">
+        <div class="stats-grid" style="margin-bottom:25px;" id="reports-stats">
           <div class="stat-card">
             <div class="stat-icon gold">✅</div>
-            <div class="stat-info"><h3>87%</h3><p>نسبة إتمام المهام</p><div class="progress-bar"><div class="progress-fill" style="width:87%"></div></div></div>
+            <div class="stat-info"><h3 id="rep-task-pct">0%</h3><p>نسبة إتمام المهام</p><div class="progress-bar"><div class="progress-fill" id="rep-task-bar" style="width:0%"></div></div></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon green">📁</div>
-            <div class="stat-info"><h3>2.4 GB</h3><p>حجم التخزين المستخدم</p><div class="progress-bar"><div class="progress-fill" style="width:48%"></div></div></div>
+            <div class="stat-info"><h3 id="rep-files">0</h3><p>إجمالي الملفات</p></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon navy">📹</div>
-            <div class="stat-info"><h3>24 س</h3><p>إجمالي وقت الاجتماعات</p><div class="stat-change up">↑ هذا الشهر</div></div>
+            <div class="stat-icon navy">🟢</div>
+            <div class="stat-info"><h3 id="rep-present">0</h3><p>حاضرون اليوم</p></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon red">⏰</div>
-            <div class="stat-info"><h3>3</h3><p>مهام متأخرة</p><div class="stat-change down">تحتاج متابعة</div></div>
+            <div class="stat-icon red">⭐</div>
+            <div class="stat-info"><h3 id="rep-evals">0</h3><p>تقييمات مسجّلة</p></div>
+          </div>
+        </div>
+        <div class="dashboard-grid" style="margin-bottom:20px;">
+          <div class="dash-card">
+            <h3 style="margin-bottom:15px;">أداء الموظفين (المهام)</h3>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead><tr><th>الموظف</th><th>مكتملة</th><th>نشطة</th><th>الإنجاز</th><th>الحالة</th></tr></thead>
+                <tbody id="reports-table"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="dash-card">
+            <h3 style="margin-bottom:15px;">ملخص الحضور والتقييم</h3>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead><tr><th>الموظف</th><th>أيام حضور</th><th>آخر تقييم</th><th>الدرجة</th></tr></thead>
+                <tbody id="reports-hr-table"></tbody>
+              </table>
+            </div>
           </div>
         </div>
         <div class="dash-card">
-          <h3 style="margin-bottom:15px;">أداء الموظفين</h3>
-          <table class="data-table">
-            <thead><tr><th>الموظف</th><th>المهام المكتملة</th><th>المهام النشطة</th><th>نسبة الإنجاز</th><th>الحالة</th></tr></thead>
-            <tbody id="reports-table"></tbody>
-          </table>
+          <h3 style="margin-bottom:12px;">ملخص سريع</h3>
+          <div id="reports-summary" style="font-size:13px;line-height:1.9;color:var(--navy);"></div>
         </div>
       </div>
 
@@ -3367,31 +3398,42 @@ function showAdminNav(isAdmin) {
   applyNavPermissions();
 }
 function applyNavPermissions() {
-  const isAdmin = !!(currentUser && currentUser.isAdmin);
+  const isAdmin = !!(currentUser && (currentUser.isAdmin || currentUser.username === 'admin'));
+  if (currentUser && isAdmin) currentUser.isAdmin = true;
   document.body.classList.toggle('is-admin', isAdmin);
   ['admin-nav-title', 'admin-nav-title2'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = isAdmin ? '' : 'none';
+    if (el) el.style.display = isAdmin ? 'block' : 'none';
+  });
+  // عناصر المدير — إظهار إجباري للمدير
+  const adminIds = ['nav-employees', 'nav-hr', 'nav-reports', 'nav-settings'];
+  adminIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isAdmin ? '' : (can(el.dataset.perm || '') ? '' : 'none');
   });
   const map = {
-    'nav-employees': 'employees', 'nav-hr': 'employees', 'nav-reports': 'reports', 'nav-settings': 'settings',
     'nav-salaries': 'salaries', 'nav-training': 'training'
   };
   Object.keys(map).forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = can(map[id]) ? '' : 'none';
+    if (el) el.style.display = (isAdmin || can(map[id])) ? '' : 'none';
   });
   document.querySelectorAll('.nav-item').forEach(n => {
     const txt = (n.textContent || '');
-    if (txt.includes('لوحة التحكم')) n.style.display = can('dashboard') ? '' : 'none';
-    else if (txt.includes('المهام')) n.style.display = can('tasks') ? '' : 'none';
-    else if (txt.includes('الملفات')) n.style.display = can('files') ? '' : 'none';
-    else if (txt.includes('الاجتماعات')) n.style.display = can('meetings') ? '' : 'none';
+    if (txt.includes('لوحة التحكم')) n.style.display = (isAdmin || can('dashboard')) ? '' : 'none';
+    else if (txt.includes('المهام') && !txt.includes('التدريب')) n.style.display = (isAdmin || can('tasks')) ? '' : 'none';
+    else if (txt.includes('الملفات')) n.style.display = (isAdmin || can('files')) ? '' : 'none';
+    else if (txt.includes('الاجتماعات')) n.style.display = (isAdmin || can('meetings')) ? '' : 'none';
   });
+  // تأكيد ظهور التقارير والموارد البشرية للمدير
+  const navReports = document.getElementById('nav-reports');
+  if (navReports) navReports.style.display = isAdmin || can('reports') ? '' : 'none';
+  const navHr = document.getElementById('nav-hr');
+  if (navHr) navHr.style.display = isAdmin || can('employees') ? '' : 'none';
   const hint = document.getElementById('emp-training-hint');
-  if (hint) hint.style.display = (can('training') && !can('train_manage')) ? 'block' : 'none';
+  if (hint) hint.style.display = (can('training') && !isAdmin && !can('train_manage')) ? 'block' : 'none';
   const rec = document.getElementById('rec-panel');
-  if (rec) rec.style.display = can('train_manage') ? '' : 'none';
+  if (rec) rec.style.display = (isAdmin || can('train_manage')) ? '' : 'none';
 }
 
 function showPage(pageId, navEl) {
@@ -3406,6 +3448,12 @@ function showPage(pageId, navEl) {
   if (pageId === 'training') { initTrainingPlatform(); renderCertificates(); }
   if (pageId === 'salaries') renderSalaries();
   if (pageId === 'hr') { renderAttendance(); renderEvaluations(); renderTodayAttendance(); }
+  if (pageId === 'reports') renderReports();
+  if (pageId === 'employees') renderEmployees();
+  if (pageId === 'meetings') renderMeetings();
+  if (pageId === 'dashboard') renderDashboard();
+  if (pageId === 'tasks') renderTasks();
+  if (pageId === 'files') renderFiles();
   const pagePerm = {
     dashboard: 'dashboard', tasks: 'tasks', files: 'files', meetings: 'meetings',
     training: 'training', salaries: 'salaries', employees: 'employees',
@@ -4603,17 +4651,86 @@ function joinByCode() {
 
 // ============ REPORTS ============
 function renderReports() {
+  try { if (typeof loadAttendanceLocal === 'function') loadAttendanceLocal(); } catch(_){}
+  try { if (typeof loadEvaluationsLocal === 'function') loadEvaluationsLocal(); } catch(_){}
+
+  const emps = EMPLOYEES.filter(e => e.user !== 'admin');
+  const totalTasks = TASKS.length;
+  const doneTasks = TASKS.filter(t => t.done).length;
+  const pct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+  const day = (typeof todayKey === 'function') ? todayKey() : new Date().toISOString().slice(0,10);
+  const att = (typeof ATTENDANCE !== 'undefined' && Array.isArray(ATTENDANCE)) ? ATTENDANCE : [];
+  const evals = (typeof EVALUATIONS !== 'undefined' && Array.isArray(EVALUATIONS)) ? EVALUATIONS : [];
+  const presentToday = att.filter(a => a.date === day && !a.checkOut).length;
+
+  const el = (id, v) => { const n = document.getElementById(id); if (n) n.textContent = v; };
+  el('rep-task-pct', pct + '%');
+  const bar = document.getElementById('rep-task-bar');
+  if (bar) bar.style.width = pct + '%';
+  el('rep-files', String(FILES.length));
+  el('rep-present', String(presentToday));
+  el('rep-evals', String(evals.length));
+
   const tbody = document.getElementById('reports-table');
-  if (!tbody) return;
-  tbody.innerHTML = EMPLOYEES.filter(e => e.user !== 'admin').map(e => `
-    <tr>
-      <td><span class="table-avatar">${e.name[0]}</span>${e.name}</td>
-      <td>${e.done}</td>
-      <td>${e.tasks - e.done}</td>
-      <td><div class="progress-bar"><div class="progress-fill" style="width:${e.tasks ? Math.round(e.done / e.tasks * 100) : 0}%"></div></div>${e.tasks ? Math.round(e.done / e.tasks * 100) : 0}%</td>
-      <td><span class="badge ${e.status}">${e.status === 'online' ? 'متصل' : e.status === 'busy' ? 'مشغول' : 'غير متصل'}</span></td>
-    </tr>`).join('');
+  if (tbody) {
+    tbody.innerHTML = emps.length ? emps.map(e => {
+      const pctE = e.tasks ? Math.round(e.done / e.tasks * 100) : 0;
+      return `<tr>
+        <td><span class="table-avatar">${(e.name||'?')[0]}</span>${e.name}</td>
+        <td>${e.done || 0}</td>
+        <td>${Math.max(0, (e.tasks || 0) - (e.done || 0))}</td>
+        <td><div class="progress-bar"><div class="progress-fill" style="width:${pctE}%"></div></div> ${pctE}%</td>
+        <td><span class="badge ${e.status || 'offline'}">${e.status === 'online' ? 'متصل' : e.status === 'busy' ? 'مشغول' : 'غير متصل'}</span></td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--gray-500);padding:20px">لا يوجد موظفون</td></tr>';
+  }
+
+  const hrBody = document.getElementById('reports-hr-table');
+  if (hrBody) {
+    hrBody.innerHTML = emps.length ? emps.map(e => {
+      const days = new Set(att.filter(a => a.username === e.user).map(a => a.date)).size;
+      const lastEv = evals.filter(v => v.username === e.user).sort((a,b) => (b.date||'').localeCompare(a.date||''))[0];
+      const stars = lastEv ? ('★'.repeat(lastEv.score||0) + '☆'.repeat(5-(lastEv.score||0))) : '—';
+      return `<tr>
+        <td>${e.name}</td>
+        <td>${days}</td>
+        <td>${lastEv ? (lastEv.date || '—') : 'لا يوجد'}</td>
+        <td style="color:var(--gold);direction:ltr;text-align:right">${stars}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--gray-500)">—</td></tr>';
+  }
+
+  const sum = document.getElementById('reports-summary');
+  if (sum) {
+    sum.innerHTML = `
+      <div>👥 الموظفون: <strong>${emps.length}</strong></div>
+      <div>✅ المهام: <strong>${doneTasks}</strong> مكتملة من أصل <strong>${totalTasks}</strong> (${pct}%)</div>
+      <div>📁 الملفات: <strong>${FILES.length}</strong> · 📹 الاجتماعات: <strong>${MEETINGS.length}</strong></div>
+      <div>🟢 حضور اليوم: <strong>${presentToday}</strong> · ⭐ التقييمات: <strong>${evals.length}</strong></div>
+      <div style="margin-top:8px;color:var(--gray-500);font-size:12px">آخر تحديث: ${new Date().toLocaleString('ar-EG')}</div>`;
+  }
 }
+
+function exportReportsCSV() {
+  const emps = EMPLOYEES.filter(e => e.user !== 'admin');
+  let att = [], evals = [];
+  try { loadAttendanceLocal(); att = ATTENDANCE || []; } catch(_){}
+  try { loadEvaluationsLocal(); evals = EVALUATIONS || []; } catch(_){}
+  const header = 'الاسم,المستخدم,القسم,مهام_مكتملة,مهام_كلية,نسبة_الانجاز,ايام_الحضور,اخر_تقييم,الدرجة\n';
+  const lines = emps.map(e => {
+    const pctE = e.tasks ? Math.round(e.done / e.tasks * 100) : 0;
+    const days = new Set(att.filter(a => a.username === e.user).map(a => a.date)).size;
+    const lastEv = evals.filter(v => v.username === e.user).sort((a,b) => (b.date||'').localeCompare(a.date||''))[0];
+    return `"${e.name}","${e.user}","${e.dept||''}",${e.done||0},${e.tasks||0},${pctE},${days},"${lastEv?lastEv.date:''}",${lastEv?lastEv.score:''}`;
+  });
+  const blob = new Blob(['\ufeff' + header + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'alextech-reports.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('⬇️ تم تصدير التقرير');
+}
+
 
 // ============ ADMIN SETTINGS ============
 function renderAdminSettings() {
