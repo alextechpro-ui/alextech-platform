@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جاري تحديث المنصة - AlexTech Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 25px rgba(59, 130, 246, 0.6)); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 12s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white overflow-x-hidden relative">
+
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <header class="w-full py-6 px-8 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <svg class="w-6 h-6 text-white animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <span class="font-bold text-xl tracking-wide bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">AlexTech Cloud</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 border border-slate-800 text-xs text-slate-400 backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+            <span>نظام الصيانة النشط</span>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center px-4 py-12 z-10">
+        <div class="max-w-xl w-full bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-8 sm:p-12 shadow-2xl text-center relative overflow-hidden">
+            
+            <!-- Glow Accent -->
+            <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 bg-blue-500/20 rounded-full blur-2xl"></div>
+
+            <!-- Icon Illustration -->
+            <div class="relative mb-8 inline-block animate-pulse-glow">
+                <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-blue-600/20 to-cyan-400/20 border border-blue-500/30 flex items-center justify-center mx-auto shadow-inner">
+                    <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Heading -->
+            <h1 class="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight">
+                جاري تحديث المنصة
+            </h1>
+
+            <!-- Subheading / Explanatory Text -->
+            <p class="text-slate-400 text-base sm:text-lg leading-relaxed mb-8 max-w-md mx-auto">
+                نحن نعمل حالياً على تطوير وتحديث خدماتنا لنقدم لكم تجربة استثنائية وأداء أسرع. المنصة ستعود للعمل بكامل طاقتها قريباً جداً بمميزات جديدة كلياً.
+            </p>
+
+            <!-- Progress Indicator bar -->
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full w-2/3 rounded-full animate-pulse"></div>
+            </div>
+
+            <!-- Status tag -->
+            <div class="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-300 px-4 py-2 rounded-xl text-sm font-medium">
+                <svg class="w-4 h-4 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>العمليات جارية الآن... شكراً لصبركم</span>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="w-full py-6 px-8 text-center z-10 border-t border-slate-900 bg-slate-950/80 backdrop-blur-md">
+        <div class="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-400">
+            <p>&copy; 2026 AlexTech Cloud. جميع الحقوق محفوظة.</p>
+            <div class="flex items-center gap-2">
+                <span>الدعم الفني:</span>
+                <a href="mailto:b@alextech-cloud.com" class="text-blue-400 hover:text-blue-300 font-medium transition-colors underline underline-offset-4 decoration-blue-500/40 hover:decoration-blue-400">
+                    b@alextech-cloud.com
+                </a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
